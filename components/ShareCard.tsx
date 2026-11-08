@@ -135,13 +135,13 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
     ctx.fillStyle = "rgba(229,184,105,.08)"; roundRect(ctx, 80, boxY, W - 160, boxH, 26); ctx.fill();
     ctx.strokeStyle = "rgba(229,184,105,.55)"; ctx.lineWidth = 2; roundRect(ctx, 80, boxY, W - 160, boxH, 26); ctx.stroke();
     ctx.fillStyle = "#C5A059"; ctx.font = `500 24px ${serif}`;
-    ctx.fillText("2026 丙午 · 나의 인생 역전 키워드", W / 2, boxY + 56);
+    ctx.fillText("2026 丙午 · 나의 운기 반전 키워드", W / 2, boxY + 56);
     ctx.fillStyle = "#F3DFAE"; ctx.font = `900 42px ${serif}`;
     ctx.fillText(yearKeyword(r, 2026), W / 2, boxY + 118);
     ctx.strokeStyle = "rgba(229,184,105,.3)"; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(200, boxY + 156); ctx.lineTo(W - 200, boxY + 156); ctx.stroke();
     ctx.fillStyle = "rgba(239,230,210,.75)"; ctx.font = `500 27px ${serif}`;
-    ctx.fillText("올해 반드시 잡아야 할 황금의 달", W / 2, boxY + 206);
+    ctx.fillText("올해 꼭 잡아야 할 황금의 달", W / 2, boxY + 206);
     // 자물쇠 뱃지
     const bw = 300, bh = 58, bx0 = (W - bw) / 2, by0 = boxY + 226;
     ctx.fillStyle = "rgba(229,184,105,.18)"; roundRect(ctx, bx0, by0, bw, bh, 29); ctx.fill();
