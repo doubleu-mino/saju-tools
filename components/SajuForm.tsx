@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Sparkles, User, Clock, MapPin, CalendarDays, Info } from "lucide-react";
+import { Sparkles, User, Clock, MapPin, CalendarDays, Info, Target, Flame, CheckCircle2, Lock } from "lucide-react";
 import {
-  SajuInput, HOUR_SLOTS, REGIONS, YEAR_MIN, YEAR_MAX, CalendarType, Gender, RegionKey,
+  SajuInput, HOUR_SLOTS, REGIONS, YEAR_MIN, YEAR_MAX, CalendarType, Gender, RegionKey, ConcernKey, WishKey, CONCERNS, WISHES,
   validateInput, leapMonthOf, lunarMonthDays, isDst, isUtc830Era,
 } from "@/lib/saju";
 
@@ -24,6 +24,8 @@ export default function SajuForm({ initial, onSubmit }: Props) {
   const [day, setDay] = useState(initial?.day ?? 1);
   const [hour, setHour] = useState<string>(initial ? (initial.hourBranch === null ? "x" : String(initial.hourBranch)) : "x");
   const [region, setRegion] = useState<RegionKey>(initial?.region ?? "seoul");
+  const [concern, setConcern] = useState<ConcernKey | null>(initial?.concern ?? null);
+  const [wish, setWish] = useState<WishKey | null>(initial?.wish ?? null);
   const [error, setError] = useState<string | null>(null);
 
   const leapMonth = useMemo(() => (calendar === "lunar-leap" ? leapMonthOf(year) : 0), [calendar, year]);
@@ -52,10 +54,14 @@ export default function SajuForm({ initial, onSubmit }: Props) {
     hourBranch: hour === "x" ? null : Number(hour),
     region,
     theme: "life",
+    concern: concern ?? "reunion",
+    wish: wish ?? "wealth",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!concern) { setError("현재 가장 풀리지 않는 고민을 하나 선택해 주세요. 선택한 고민에 맞춰 결정적 '달'을 핀포인트로 산출합니다."); return; }
+    if (!wish) { setError("끌어당기고 싶은 절대 기운을 하나 선택해 주세요."); return; }
     const input = build();
     const err = validateInput(input);
     if (err) { setError(err); return; }
@@ -157,13 +163,57 @@ export default function SajuForm({ initial, onSubmit }: Props) {
         </label>
       </div>
 
+
+      {/* ───── 2차 심층 질문 ───── */}
+      <div className="mt-7 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[11px] tracking-[0.3em] text-gold-2"><Target size={13} /> 2차 심층 질문 · 핀포인트 간명</p>
+          <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold"><Lock size={10} /> VIP 간명 기초 데이터</span>
+        </div>
+        <p className="mt-1.5 text-xs leading-relaxed text-fg/55">
+          선택한 고민과 기운에 맞춰 2026 丙午·2027 丁未 세운과 12신살을 교차해 <b className="text-gold-light">결정적 달(月)·귀인 성씨·비책 물상</b>을 산출합니다.
+        </p>
+
+        <div className="mt-4">
+          <span className="mb-2 block text-xs tracking-wider text-gold-2">1. 현재 가장 풀리지 않는 고민 <span className="text-fg/40">(택1)</span></span>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {CONCERNS.map((c) => (
+              <button key={c.key} type="button" aria-pressed={concern === c.key} className={`chip ${concern === c.key ? "is-active" : ""}`} onClick={() => { setConcern(c.key); if (error) setError(null); }}>
+                <span className="text-base leading-none">{c.emoji}</span>
+                <span className="flex-1">
+                  <span className="block font-semibold">{c.label}</span>
+                  <span className="block text-[11px] text-fg/45">{c.hint}</span>
+                </span>
+                <CheckCircle2 size={16} className="chip__check" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <span className="mb-2 flex items-center gap-1 text-xs tracking-wider text-gold-2"><Flame size={12} /> 2. 끌어당기고 싶은 절대 기운 <span className="text-fg/40">(택1)</span></span>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {WISHES.map((w) => (
+              <button key={w.key} type="button" aria-pressed={wish === w.key} className={`chip ${wish === w.key ? "is-active" : ""} !flex-col !items-start !gap-1`} onClick={() => { setWish(w.key); if (error) setError(null); }}>
+                <span className="flex w-full items-center gap-1.5">
+                  <span className="text-base leading-none">{w.emoji}</span>
+                  <span className="font-semibold">{w.label}</span>
+                  <CheckCircle2 size={14} className="chip__check" />
+                </span>
+                <span className="text-[11px] text-fg/45">{w.hint}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {error && <p className="mt-4 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-fire-text">{error}</p>}
 
       <button
         type="submit"
         className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-6 py-4 text-base font-bold text-on-gold shadow-[0_8px_30px_rgba(229,184,105,.25)] transition hover:brightness-110 active:scale-[.99]"
       >
-        <Sparkles size={18} /> 사주 분석 시작
+        <Sparkles size={18} /> 핀포인트 사주 분석 시작
       </button>
       <p className="mt-3 text-center text-[11px] text-fg/40">입력 정보는 브라우저 안에서만 계산되며 서버로 전송되지 않습니다.</p>
     </form>

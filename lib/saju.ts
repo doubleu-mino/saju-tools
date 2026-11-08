@@ -141,6 +141,28 @@ export const THEMES: { key: ThemeKey; emoji: string; label: string; short: strin
 /** 결과 화면 하단 테마 탭 (인생 총운은 무료로 전체 공개되므로 제외) */
 export const REPORT_THEMES = THEMES.filter((t): t is typeof t & { key: ReportThemeKey } => t.key !== "life");
 
+/* ───────────────────────── 2차 심층 질문 (고민 · 절대 기운) ───────────────────────── */
+
+export type ConcernKey = "reunion" | "career" | "debt" | "business" | "prime";
+export type WishKey = "wealth" | "power" | "charm" | "shield";
+
+export interface ChoiceMeta<K extends string> { key: K; emoji: string; label: string; short: string; hint: string }
+
+export const CONCERNS: ChoiceMeta<ConcernKey>[] = [
+  { key: "reunion", emoji: "💔", label: "이별 후 재회/인연의 타이밍", short: "재회·인연", hint: "연락이 오는 달 · 재회 통로 · 당일 소품" },
+  { key: "career", emoji: "💼", label: "이직·퇴사 및 조직 갈등", short: "이직·조직", hint: "서명해도 되는 달 · 끌어주는 귀인 · 면접 색" },
+  { key: "debt", emoji: "💸", label: "밑 빠진 독처럼 새는 재물·빚", short: "새는 재물", hint: "손재수의 달 · 돈줄 트이는 달 · 탈재 차단 물상" },
+  { key: "business", emoji: "🚀", label: "독립 사업·스타트업·신규 투자", short: "사업·투자", hint: "격국 · 사기수 달 · 동업자 성씨 · 방위" },
+  { key: "prime", emoji: "📜", label: "인생의 전성기 대운 시기", short: "전성기 대운", hint: "전성기 대운 나이 · 황금의 달 · 평생 물상" },
+];
+
+export const WISHES: ChoiceMeta<WishKey>[] = [
+  { key: "wealth", emoji: "💰", label: "일확천금 편재운", short: "편재운", hint: "편재 폭발 월 · 금고 물상" },
+  { key: "power", emoji: "👑", label: "권력·승진 정관운", short: "정관운", hint: "사령의 달 · 인장 물상" },
+  { key: "charm", emoji: "🌸", label: "도화·인기·매력운", short: "도화운", hint: "도화가 서는 달 · 시선을 끄는 색" },
+  { key: "shield", emoji: "🛡️", label: "액운·삼재 소멸운", short: "액운 소멸", hint: "겁살·재살의 달 · 액막이 물상" },
+];
+
 export const YEAR_MIN = 1940;
 export const YEAR_MAX = 2026;
 
@@ -155,6 +177,10 @@ export interface SajuInput {
   hourBranch: number | null;
   region: RegionKey;
   theme: ThemeKey;
+  /** 현재 가장 풀리지 않는 고민 (2차 심층 질문) */
+  concern: ConcernKey;
+  /** 끌어당기고 싶은 절대 기운 (2차 심층 질문) */
+  wish: WishKey;
 }
 
 /* ───────────────────────── 시간 보정 데이터 ───────────────────────── */
@@ -513,6 +539,81 @@ export function calculateSaju(input: SajuInput): SajuResult {
   };
 }
 
+/* ───────────────────────── 지지 관계 · 12신살 · 삼재 · 귀인 ───────────────────────── */
+
+/** 육합(六合): 子丑 寅亥 卯戌 辰酉 巳申 午未 */
+export const sixHarmonyOf = (b: number) => mod(13 - b, 12);
+/** 충(沖): 정반대 지지 */
+export const clashOf = (b: number) => mod(b + 6, 12);
+/** 삼합(三合) 국 번호 — 0:申子辰(水) 1:巳酉丑(金) 2:寅午戌(火) 3:亥卯未(木) */
+export const trineGroupOf = (b: number) => mod(b, 4);
+export const TRINE_LABEL = ["申子辰 수국(水局)", "巳酉丑 금국(金局)", "寅午戌 화국(火局)", "亥卯未 목국(木局)"] as const;
+/** 삼합국의 묘(墓) 지지: 辰·丑·戌·未 */
+const TRINE_TOMB = [4, 1, 10, 7];
+
+export const SHINSAL_NAMES = ["겁살", "재살", "천살", "지살", "년살", "월살", "망신살", "장성살", "반안살", "역마살", "육해살", "화개살"] as const;
+export type Shinsal = (typeof SHINSAL_NAMES)[number];
+
+/** 기준 지지(연지 또는 일지)의 삼합국으로 본 대상 지지의 12신살 */
+export function shinsalOf(baseBranch: number, target: number): Shinsal {
+  const tomb = TRINE_TOMB[trineGroupOf(baseBranch)];
+  return SHINSAL_NAMES[mod(target - (tomb + 1), 12)];
+}
+/** 도화(년살) 지지 */
+export const dohwaBranchOf = (base: number) => mod(TRINE_TOMB[trineGroupOf(base)] + 5, 12);
+/** 역마 지지 */
+export const yeokmaBranchOf = (base: number) => mod(TRINE_TOMB[trineGroupOf(base)] + 10, 12);
+/** 겁살 지지 */
+export const geopsalBranchOf = (base: number) => mod(TRINE_TOMB[trineGroupOf(base)] + 1, 12);
+/** 재살 지지 */
+export const jaesalBranchOf = (base: number) => mod(TRINE_TOMB[trineGroupOf(base)] + 2, 12);
+
+export type SamjaeStage = "들삼재" | "눌삼재" | "날삼재";
+/** 삼재(三災): 띠(연지) 삼합국 기준 역마·육해·화개 해 */
+export function samjaeStage(birthYearBranch: number, targetYearBranch: number): SamjaeStage | null {
+  const s = shinsalOf(birthYearBranch, targetYearBranch);
+  return s === "역마살" ? "들삼재" : s === "육해살" ? "눌삼재" : s === "화개살" ? "날삼재" : null;
+}
+
+/** 천을귀인(天乙貴人) 지지 — 일간 기준. 甲戊庚:丑未 乙己:子申 丙丁:亥酉 辛:寅午 壬癸:巳卯 */
+export const CHEONEUL_BRANCHES: number[][] = [
+  [1, 7], [0, 8], [11, 9], [11, 9], [1, 7], [0, 8], [1, 7], [2, 6], [5, 3], [5, 3],
+];
+
+/** 천간합: 甲己 乙庚 丙辛 丁壬 戊癸 */
+export const stemsCombine = (a: number, b: number) => mod(a - b, 10) === 5;
+
+/* ───────────────────────── 세운·월운 간지 ───────────────────────── */
+
+export interface Ganzhi {
+  stem: number;
+  branch: number;
+  ganzhi: string;
+  ko: string;
+  stemElement: Element;
+  branchElement: Element;
+}
+
+export function yearGanzhi(year: number): Ganzhi & { year: number } {
+  const stem = mod(year - 4, 10), branch = mod(year - 4, 12);
+  return { year, stem, branch, ganzhi: `${STEMS[stem]}${BRANCHES[branch]}`, ko: `${STEMS_KO[stem]}${BRANCHES_KO[branch]}`, stemElement: STEM_ELEMENT[stem], branchElement: BRANCH_ELEMENT[branch] };
+}
+
+/**
+ * 양력 달력 월에 대응하는 월건(月建) 간지.
+ * 1월=丑월(전년 간지 기준), 2월=寅월 … 12월=子월. 절입일(매월 4~8일) 전후 수일의 오차는 허용.
+ */
+export function monthGanzhi(year: number, month: number): Ganzhi & { year: number; month: number } {
+  const branch = mod(month, 12);
+  const yStem = mod((month === 1 ? year - 1 : year) - 4, 10);
+  const order = month === 1 ? 11 : month - 2;
+  const stem = ((yStem % 5) * 2 + 2 + order) % 10;
+  return { year, month, stem, branch, ganzhi: `${STEMS[stem]}${BRANCHES[branch]}`, ko: `${STEMS_KO[stem]}${BRANCHES_KO[branch]}`, stemElement: STEM_ELEMENT[stem], branchElement: BRANCH_ELEMENT[branch] };
+}
+
+/** 지지 b 에 해당하는 양력 월 (丑=1월 … 子=12월) */
+export const monthOfBranch = (b: number) => (mod(b, 12) === 0 ? 12 : mod(b, 12));
+
 /* ───────────────────────── URL 직렬화 (공유용) ───────────────────────── */
 
 export function encodeInput(i: SajuInput): string {
@@ -523,6 +624,7 @@ export function encodeInput(i: SajuInput): string {
   p.set("y", String(i.year)); p.set("m", String(i.month)); p.set("d", String(i.day));
   p.set("h", i.hourBranch === null ? "x" : String(i.hourBranch));
   p.set("r", i.region); p.set("t", i.theme);
+  p.set("q", i.concern); p.set("w", i.wish);
   return p.toString();
 }
 
@@ -539,6 +641,8 @@ export function decodeInput(search: string): SajuInput | null {
     hourBranch: h === "x" || h === null ? null : Math.min(11, Math.max(0, Number(h))),
     region: (REGIONS.find((r) => r.key === p.get("r"))?.key ?? "seoul") as RegionKey,
     theme: (THEMES.find((t) => t.key === p.get("t"))?.key ?? "life") as ThemeKey,
+    concern: (CONCERNS.find((c) => c.key === p.get("q"))?.key ?? "reunion") as ConcernKey,
+    wish: (WISHES.find((w) => w.key === p.get("w"))?.key ?? "wealth") as WishKey,
   };
   if ([input.year, input.month, input.day].some((n) => !Number.isFinite(n))) return null;
   return input;

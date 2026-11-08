@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { RotateCcw, Compass, Palette, Hash, Sparkles, Star, Gem, Lock, Unlock, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { RotateCcw, Compass, Palette, Hash, Sparkles, Star, Gem, Lock, Unlock, Crown, Flame, ChevronRight, Target, ShieldAlert } from "lucide-react";
 import {
-  SajuResult as SajuResultType, Pillar, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, ELEMENT_DESC, REPORT_THEMES, ReportThemeKey, Element,
+  SajuResult as SajuResultType, Pillar, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, ELEMENT_DESC, Element,
 } from "@/lib/saju";
-import { DAY_MASTER_PROFILES, buildThemeReport, buildTeaser, buildVipPreview, EXCESS_TEXT, LACK_TEXT, currentDaeun } from "@/lib/interpretations";
+import { DAY_MASTER_PROFILES, buildThemeReport, EXCESS_TEXT, LACK_TEXT, currentDaeun } from "@/lib/interpretations";
+import { buildPinpoint, TIER_META, yearGodSummary, MonthCard, YearTimeline } from "@/lib/pinpoint";
 import ShareCard from "./ShareCard";
 import VipModal from "./VipModal";
+import { LockedText, LockClick } from "./InlineLock";
 
 interface Props {
   result: SajuResultType;
@@ -69,17 +71,32 @@ export default function SajuResult({ result: r, onReset }: Props) {
   const cur = currentDaeun(r);
   const displayPillars = [...r.pillars].reverse(); // 시·일·월·연 (전통 표기 순)
 
-  // 2단계: 테마별 탭 (입력 시 관심 테마가 있었다면 그 탭을 먼저 펼침)
-  const initialTab: ReportThemeKey = r.input.theme === "life" ? "wealth" : r.input.theme;
-  const [tab, setTab] = useState<ReportThemeKey>(initialTab);
+  // 핀포인트 리포트 (고민·절대 기운 × 2026·2027 세운 × 12신살)
+  const pin = useMemo(() => buildPinpoint(r), [r]);
+  const y26 = useMemo(() => yearGodSummary(r, 2026), [r]);
+  const y27 = useMemo(() => yearGodSummary(r, 2027), [r]);
+  const [calYear, setCalYear] = useState<2026 | 2027>(2026);
+  const timeline = pin.timelines.find((t) => t.year === calYear) ?? pin.timelines[0];
+
+  // VIP 모달 (자물쇠 클릭 시 어떤 항목을 눌렀는지 전달)
   const [vipOpen, setVipOpen] = useState(false);
-  const tabMeta = REPORT_THEMES.find((t) => t.key === tab)!;
-  const tabReport = useMemo(() => buildThemeReport(r, tab), [r, tab]);
-  const teaser = useMemo(() => buildTeaser(r, tab), [r, tab]);
-  const vipPreview = useMemo(() => buildVipPreview(r, tab), [r, tab]);
+  const [lockHint, setLockHint] = useState<string | null>(null);
+  const openVip = (c?: LockClick | string) => {
+    setLockHint(typeof c === "string" ? c : c?.hint ?? null);
+    setVipOpen(true);
+  };
+
+  // 하단 고정 CTA — 원국 패를 지나 스크롤하면 등장
+  const [showCta, setShowCta] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowCta(window.scrollY > 700);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 sm:pb-20">
       {/* 요약 헤더 */}
       <div className="card ornament animate-rise rounded-2xl p-5 text-center sm:p-8">
         <p className="text-[11px] tracking-[0.35em] text-gold-2">{r.input.gender === "male" ? "乾命" : "坤命"} · {r.zodiac}띠</p>
@@ -269,93 +286,180 @@ export default function SajuResult({ result: r, onReset }: Props) {
         </div>
       </Section>
 
-      {/* PART 5 — 2단계 테마별 탭 + 3단계 VIP 잠금 */}
-      <Section no="05" title="테마별 심층 리포트" sub="궁금한 운세를 선택하세요. 핵심 3줄은 무료, 2026–2027 심층 비책 전문은 VIP 리포트로 제공됩니다.">
-        {/* 탭 */}
-        <div role="tablist" aria-label="테마별 리포트" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {REPORT_THEMES.map((t) => {
-            const active = t.key === tab;
-            return (
-              <button
-                key={t.key}
-                role="tab"
-                type="button"
-                aria-selected={active}
-                aria-controls={`theme-panel-${t.key}`}
-                id={`theme-tab-${t.key}`}
-                onClick={() => setTab(t.key)}
-                className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
-                  active
-                    ? "border-gold bg-gold/15 text-gold-light shadow-[inset_0_0_12px_rgba(229,184,105,.15)]"
-                    : "border-gold-2/25 bg-ink/60 text-fg/70 hover:border-gold-2/60"
-                }`}
-              >
-                <span className="mr-1.5">{t.emoji}</span>{t.label}
-              </button>
-            );
-          })}
+      {/* PART 5 — 선택한 고민 심층 타겟 리포트 (인라인 키워드 락) */}
+      <Section no="05" title={`${pin.concern.emoji} ${pin.concernTitle}`} sub={pin.concernSummary}>
+        {/* 세운 뱃지 */}
+        <div className="mb-5 flex flex-wrap items-center gap-2 text-[11px]">
+          <span className="inline-flex items-center gap-1 rounded-full border border-gold/50 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Target size={11} /> 선택한 고민 · {pin.concern.short}</span>
+          <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">2026 {y26.ko}({y26.ganzhi}) · {y26.stemGod}/{y26.branchGod}</span>
+          <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">2027 {y27.ko}({y27.ganzhi}) · {y27.stemGod}/{y27.branchGod}</span>
+          <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">용신 {pin.benefactor.yong}({ELEMENT_HANJA[pin.benefactor.yong]}) · 희신 {pin.benefactor.hui}({ELEMENT_HANJA[pin.benefactor.hui]})</span>
         </div>
 
-        {/* 맛보기 3줄 (무료) */}
-        <div key={tab} id={`theme-panel-${tab}`} role="tabpanel" aria-labelledby={`theme-tab-${tab}`} className="animate-rise mt-6">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-lg font-black text-gold-light">{tabMeta.emoji} {tabReport.title}</h4>
-            <span className="inline-flex items-center gap-1 text-gold">
-              {Array.from({ length: 5 }, (_, i) => <Star key={i} size={14} fill={i < tabReport.score ? "currentColor" : "none"} className={i < tabReport.score ? "" : "opacity-30"} />)}
-              <span className="ml-1.5 text-[11px] text-fg/50">{tabReport.score}/5</span>
-            </span>
-          </div>
-          <p className="mt-1.5 text-sm text-fg/60">{tabReport.summary}</p>
-
-          <div className="mt-4 rounded-xl border border-gold-2/25 bg-ink/50 p-4 sm:p-5">
-            <p className="mb-3 text-[11px] tracking-wider text-gold-2">핵심 3줄 맛보기 · 무료</p>
-            <ol className="space-y-3">
-              {teaser.map((line, i) => (
-                <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-fg/85">
-                  <CheckCircle2 size={18} className="mt-1 shrink-0 text-gold" />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {/* VIP 블러 미리보기 + 잠금 */}
-          <div className="relative mt-4 overflow-hidden rounded-xl border border-gold/40 bg-ink/40">
-            <div className="vip-blur space-y-4 p-5 text-[15px] leading-[1.9] text-fg/80 sm:p-6" aria-hidden="true">
-              <p className="text-[11px] tracking-wider text-gold-2">2026–2027 VIP 심층 비책 · {tabMeta.label}</p>
-              {vipPreview.map((para, i) => <p key={i}>{para}</p>)}
+        <div className="space-y-6">
+          {pin.concernParas.map((para, i) => (
+            <div key={i} className="border-l-2 border-gold-2/50 pl-4">
+              <h4 className="font-bold text-gold-light">{para.heading}</h4>
+              <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85">
+                <LockedText segments={para.segments} onUnlock={openVip} />
+              </p>
             </div>
-            <div className="vip-fade absolute inset-0" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 text-center">
-              <span className="grid h-12 w-12 place-items-center rounded-full border border-gold/50 bg-ink/80 text-gold shadow-[0_0_24px_rgba(229,184,105,.25)]">
-                <Lock size={22} />
-              </span>
-              <p className="text-xs text-fg/70">본문 {vipPreview.length}문단 · 월별 길흉표 · 12개월 실천 처방 포함</p>
+          ))}
+        </div>
+
+        {/* 절대 기운 */}
+        <div className="mt-7 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
+          <p className="flex items-center gap-1.5 text-[11px] tracking-[0.3em] text-gold-2"><Flame size={12} /> 끌어당기고 싶은 절대 기운 · {pin.wish.short}</p>
+          {pin.wishParas.map((para) => (
+            <div key={para.heading} className="mt-3">
+              <h4 className="font-bold text-gold-light">{para.heading}</h4>
+              <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85">
+                <LockedText segments={para.segments} onUnlock={openVip} />
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* 재벌가 비전 간명식 요약 카드 */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <button type="button" onClick={() => openVip("?씨 성")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
+            <p className="text-[11px] tracking-wider text-gold-2">재벌가 비전 간명식 · 귀인 성씨 초성</p>
+            <p className="mt-2 flex items-center gap-2 text-lg font-black text-gold-light">
+              <span className="inline-lock"><Lock size={11} /> ?/? 초성</span>
+              <span className="inline-lock"><Lock size={11} /> ?/? 초성</span>
+            </p>
+            <p className="mt-1.5 text-xs text-fg/50">용신·희신 소리오행으로 산출 · 천을귀인 {pin.benefactor.zodiacs.join("·")}띠</p>
+          </button>
+          <button type="button" onClick={() => openVip("??? 물상")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
+            <p className="text-[11px] tracking-wider text-gold-2">삼재·관살·손재수 무력화 비책</p>
+            <p className="mt-2 text-lg font-black text-gold-light">
+              보완 오행 <span style={{ color: pin.remedy.element === "수" ? "var(--water-text)" : ELEMENT_COLOR[pin.remedy.element] }}>{pin.remedy.element}({ELEMENT_HANJA[pin.remedy.element]})</span>
+            </p>
+            <p className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-fg/50">물상 <span className="inline-lock"><Lock size={11} /> ???</span> · 방위 <span className="inline-lock"><Lock size={11} /> ?쪽</span></p>
+          </button>
+          <button type="button" onClick={() => openVip("???격")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
+            <p className="text-[11px] tracking-wider text-gold-2">격국(格局) · 월지 {r.pillars[1].branchHanja} 기준</p>
+            <p className="mt-2 text-lg font-black text-gold-light"><span className="inline-lock"><Lock size={11} /> ???격</span></p>
+            <p className="mt-1.5 text-xs text-fg/50">{r.strength.label} · 월지 {r.pillars[1].branchGod} 투출 여부로 판정</p>
+          </button>
+        </div>
+        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-fg/40"><ShieldAlert size={12} className="mt-0.5 shrink-0" /> 월운은 절입일(매월 4~8일) 기준 월건으로 산출되며, 달력 월과 수일의 차이가 있을 수 있습니다. 자물쇠 항목은 VIP 간명 해금 시 공개됩니다.</p>
+      </Section>
+
+      {/* PART 6 — 12개월 운세 캘린더 타임라인 */}
+      <Section no="06" title="2026–2027 12개월 운세 캘린더 타임라인" sub="10개 월의 기운은 공개하고, 인생 역전 '황금의 달' 1곳과 절대 조심 '손재수의 달' 1곳은 VIP 황금 자물쇠로 잠겨 있습니다.">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div role="tablist" aria-label="연도 선택" className="inline-flex rounded-xl border border-gold-2/30 bg-ink/60 p-1">
+            {pin.timelines.map((t) => (
               <button
+                key={t.year}
+                role="tab"
                 type="button"
-                onClick={() => setVipOpen(true)}
-                className="animate-glow inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-5 py-3 text-sm font-bold text-on-gold shadow-[0_8px_30px_rgba(229,184,105,.3)] transition hover:brightness-110 active:scale-[.99] sm:text-base"
+                aria-selected={calYear === t.year}
+                onClick={() => setCalYear(t.year as 2026 | 2027)}
+                className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${calYear === t.year ? "bg-gold/20 text-gold-light shadow-[inset_0_0_10px_rgba(229,184,105,.15)]" : "text-fg/60 hover:text-fg"}`}
               >
-                <Lock size={16} /> 2026-2027 VIP 사주 심층 비책 전문 열람하기
+                {t.year} {t.ko}({t.ganzhi})
               </button>
-              <p className="text-[11px] text-gold-2">사전 예약 시 얼리버드 50% 할인</p>
-            </div>
+            ))}
           </div>
+          <div className="flex flex-wrap gap-1.5 text-[11px]">
+            {timeline.samjae && <span className="rounded-full border border-[#C2413B]/50 bg-[#C2413B]/10 px-2.5 py-1 font-semibold text-fire-text">{r.zodiac}띠 {timeline.samjae}</span>}
+            {(["opportunity", "rising", "calm"] as const).map((k) => (
+              <span key={k} className="rounded-full border border-gold-2/25 bg-ink/50 px-2.5 py-1 text-fg/65">{TIER_META[k].emoji} {TIER_META[k].label}</span>
+            ))}
+            <span className="rounded-full border border-gold/60 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Lock size={10} className="mr-0.5 inline" /> VIP 열람 2곳</span>
+          </div>
+        </div>
+
+        <div key={calYear} className="animate-rise grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+          {timeline.months.map((m) => <MonthTile key={m.month} m={m} t={timeline} onUnlock={openVip} />)}
+        </div>
+
+        <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <p className="leading-relaxed text-fg/80">
+            <Crown size={14} className="mr-1 inline text-gold" />
+            잠긴 두 달 중 하나는 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">인생 역전 황금의 달</b>, 다른 하나는 <b className="text-fire-text">절대 조심 손재수의 달</b>입니다. 둘을 바꿔 움직이면 1년이 뒤집힙니다.
+          </p>
+          <button type="button" onClick={() => openVip("VIP 열람")} className="mt-3 inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-4 py-2.5 text-sm font-bold text-on-gold transition hover:brightness-110 sm:mt-0">
+            <Lock size={14} /> 두 달 즉시 해금 <ChevronRight size={14} />
+          </button>
         </div>
       </Section>
 
-      {/* PART 6 */}
-      <Section no="06" title="카카오톡 · SNS 공유 카드" sub="나의 사주 8글자 패를 이미지로 저장하거나 친구에게 공유해 보세요.">
+      {/* PART 7 */}
+      <Section no="07" title="카카오톡 · SNS 공유 카드" sub="나의 사주 8글자 패를 이미지로 저장하거나 친구에게 공유해 보세요.">
         <ShareCard result={r} />
       </Section>
 
-      <VipModal open={vipOpen} onClose={() => setVipOpen(false)} themeLabel={tabMeta.label} />
+      <VipModal open={vipOpen} onClose={() => setVipOpen(false)} themeLabel={pin.concern.short} lockHint={lockHint} lockCount={pin.lockCount} />
 
       <div className="flex justify-center pt-2">
         <button onClick={onReset} className="inline-flex items-center gap-2 rounded-xl border border-gold-2/40 px-6 py-3 text-sm text-gold transition hover:bg-gold/10">
           <RotateCcw size={16} /> 다른 사주 보기
         </button>
       </div>
+
+      {/* 하단 고정 CTA 배너 */}
+      {showCta && !vipOpen && (
+        <div className="sticky-cta fixed inset-x-0 bottom-0 z-40 px-3 pb-3 sm:px-4 sm:pb-4" role="region" aria-label="VIP 해금 안내">
+          <div className="mx-auto max-w-3xl">
+            <button
+              type="button"
+              onClick={() => openVip("7가지 VIP 비책")}
+              className="sticky-cta__btn flex w-full items-center justify-center gap-2.5 rounded-2xl px-4 py-3.5 text-left text-sm font-bold text-on-gold shadow-[0_-4px_30px_rgba(229,184,105,.35),0_10px_30px_rgba(0,0,0,.35)] transition hover:brightness-110 active:scale-[.99] sm:text-[15px]"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black/15"><Lock size={16} /></span>
+              <span className="flex-1 leading-tight">
+                내 사주의 막힌 운을 뚫는 <u className="decoration-2 underline-offset-2">7가지 VIP 비책</u> &amp; 대박의 달 즉시 해금
+                <span className="mt-0.5 block text-[11px] font-semibold opacity-80">잠긴 항목 {pin.lockCount}곳 · 사전 예약 얼리버드 50% 할인</span>
+              </span>
+              <ChevronRight size={18} className="shrink-0" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────── 월운 타일 ───────────────────────── */
+
+function MonthTile({ m, t, onUnlock }: { m: MonthCard; t: YearTimeline; onUnlock: (hint: string) => void }) {
+  const locked = m.tier === "golden" || m.tier === "danger";
+  const meta = TIER_META[m.tier];
+  if (locked) {
+    return (
+      <button
+        type="button"
+        onClick={() => onUnlock(`${t.year}년 ??월 · VIP 열람`)}
+        className="gold-lock-card group relative flex min-h-[132px] flex-col items-center justify-center rounded-xl p-3 text-center transition hover:brightness-110"
+        aria-label={`${m.month}월 — VIP 열람 필요`}
+      >
+        <span className="absolute left-2.5 top-2 text-[11px] font-bold tracking-wider text-gold-light/80">{m.month}월</span>
+        <span className="gold-lock-icon grid h-11 w-11 place-items-center rounded-full border border-gold/60 bg-gold/15 text-gold">
+          <Lock size={20} />
+        </span>
+        <span className="mt-2 text-xs font-bold text-gold-light">🔒 VIP 열람</span>
+        <span className="mt-0.5 text-[10px] leading-tight text-fg/55">대박의 달 or 손재수의 달</span>
+      </button>
+    );
+  }
+  const tone = m.tier === "opportunity" ? "border-wood/40 bg-wood/10" : m.tier === "rising" ? "border-gold-2/35 bg-gold/5" : "border-gold-2/20 bg-ink/50";
+  return (
+    <div className={`flex min-h-[132px] flex-col rounded-xl border p-3 ${tone}`}>
+      <div className="flex items-start justify-between">
+        <span className="text-[13px] font-bold text-fg/90">{m.month}월</span>
+        <span className="text-base font-black tracking-wider" style={{ fontFamily: "var(--font-hanja)" }}>
+          <span style={{ color: m.stemElement === "수" ? "var(--water-text)" : ELEMENT_COLOR[m.stemElement] }}>{m.ganzhi[0]}</span>
+          <span style={{ color: m.branchElement === "수" ? "var(--water-text)" : ELEMENT_COLOR[m.branchElement] }}>{m.ganzhi[1]}</span>
+        </span>
+      </div>
+      <span className={`mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${m.tier === "opportunity" ? "bg-wood/20 text-wood-text" : m.tier === "rising" ? "bg-gold/15 text-gold-light" : "bg-fg/10 text-fg/65"}`}>
+        {meta.emoji} {meta.label}
+      </span>
+      <p className="mt-2 text-[11px] leading-snug text-fg/65">{m.keyword}</p>
+      <p className="mt-auto pt-2 text-[10px] text-fg/40">{m.stemGod}·{m.branchGod} · {m.shinsal}</p>
     </div>
   );
 }
