@@ -16,15 +16,15 @@ export default function Home() {
       {/* 히어로 */}
       <section className="mb-8 text-center">
         <p className="animate-rise text-xs tracking-[0.5em] text-gold-2">{SITE_NAME_EN.toUpperCase()} · 正統 萬歲曆 · 24個月 타임라인</p>
-        <h1 className="animate-rise delay-1 mt-4 text-3xl font-black leading-[1.25] sm:text-4xl md:text-5xl">
+        <h1 className="animate-rise delay-1 mt-4 break-keep text-balance text-3xl font-black leading-[1.25] sm:text-4xl md:text-5xl">
           <span className="text-fg">좋은 말로 위로하지 않습니다.</span>
           <br />
           <span className="gold-text">피해야 할 손재수의 달까지 데이터로 짚습니다.</span>
         </h1>
-        <p className="animate-rise delay-2 mt-4 text-sm tracking-[0.12em] text-gold-2 sm:text-base">천문 절기·진태양시 보정 기반 정통 만세력 &amp; 24개월 타임라인 | {SITE_NAME}</p>
-        <p className="animate-rise delay-2 mx-auto mt-4 max-w-2xl text-base leading-relaxed text-fg/65 sm:text-lg">
-          사주원국 8글자와 오행 분포, 일간의 본성과 인생 종합 총운은 무료로 완전 공개합니다.
-          <br className="hidden sm:block" /> 결정적 달(月)·귀인 성씨·황금의 달과 손재수의 달은 데이터로 산출해 해금 시 그대로 보여드립니다.
+        <p className="animate-rise delay-2 mt-4 break-keep text-pretty text-sm tracking-[0.12em] text-gold-2 sm:text-base">천문 절기·진태양시 보정 기반 정통 만세력 &amp; 24개월 타임라인 | {SITE_NAME}</p>
+        <p className="animate-rise delay-2 mx-auto mt-4 max-w-2xl break-keep text-pretty text-base leading-relaxed text-fg/65 sm:text-lg">
+          <span className="block">사주원국 8글자와 오행 분포, 일간의 본성과 인생 종합 총운은 무료로 완전 공개합니다.</span>
+          <span className="mt-1 block">결정적 달(月)·귀인 성씨·황금의 달과 손재수의 달은 데이터로 산출해 해금 시 그대로 보여드립니다.</span>
         </p>
         <div className="animate-rise delay-3 mt-7"><TrustBadges /></div>
       </section>
@@ -38,14 +38,14 @@ export default function Home() {
         {FEATURES.map(({ icon: Icon, title, desc }) => (
           <div key={title} className="card rounded-2xl p-5">
             <Icon size={22} className="text-gold" />
-            <h3 className="mt-3 font-bold text-gold-light">{title}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-fg/60">{desc}</p>
+            <h3 className="mt-3 break-keep font-bold text-gold-light">{title}</h3>
+            <p className="mt-1.5 break-keep text-pretty text-sm leading-relaxed text-fg/60">{desc}</p>
           </div>
         ))}
       </section>
 
       {/* SEO 텍스트 */}
-      <section className="prose-saju mt-16 text-fg/75">
+      <section className="prose-saju mt-16 break-keep text-pretty text-fg/75">
         <h2>사주팔자(四柱八字)란 무엇인가요?</h2>
         <p>
           사주팔자는 태어난 연·월·일·시 네 개의 기둥(四柱)에 각각 천간(天干)과 지지(地支) 한 글자씩, 모두 여덟 글자(八字)를 배치한 명식입니다.

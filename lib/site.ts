@@ -10,14 +10,12 @@ export const SITE_DESC =
 
 /* 사업자 표기 (PG·전자상거래 심사용) */
 export const BUSINESS = {
-  name: "운세로그",
-  nameEn: "UnseLog",
-  owner: "우민호",
-  email: "doubleu.mino@gmail.com",
-  /** 사업자등록 후 실제 번호로 교체 */
-  registrationNo: "000-00-00000 (등록 예정)",
-  /** 통신판매업 신고 후 실제 번호로 교체 */
-  mailOrderNo: "제0000-서울00-0000호 (신고 예정)",
-  address: "주소 기재 예정",
+  name: "우노팜",
+  nameEn: "UNOPALM",
+  owner: "박소영",
+  email: "eunomarket@naver.com",
+  registrationNo: "789-46-00926",
+  mailOrderNo: "2022-별내-1267",
+  address: "경기도 화성시 동탄구 동탄순환대로8길 11, 3118동 1704호",
 };
 export const CONTACT_EMAIL = BUSINESS.email;

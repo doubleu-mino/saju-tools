@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import StaticPage from "@/components/StaticPage";
-import { SITE_NAME, SITE_NAME_EN } from "@/lib/site";
+import { SITE_NAME, SITE_NAME_EN, BUSINESS } from "@/lib/site";
 
 export const metadata: Metadata = { title: "개인정보처리방침", description: "운세로그(UnseLog)는 사주 입력 데이터를 서버로 전송하거나 저장하지 않습니다." };
 
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
       <h2>6. 개인정보 보호책임자 및 문의</h2>
       <p>
         개인정보 처리에 관한 문의, 의견, 불만은 아래 연락처로 접수해 주시면 신속히 답변드리겠습니다.
-        <br />이메일: <a href="mailto:doubleu.mino@gmail.com">doubleu.mino@gmail.com</a>
+        <br />이메일: <a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>
       </p>
 
       <h2>7. 방침의 변경</h2>

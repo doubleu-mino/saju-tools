@@ -69,7 +69,7 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!concern) { setError("현재 가장 풀리지 않는 고민을 하나 선택해 주세요. 선택한 고민에 맞춰 결정적 '달'을 핀포인트로 산출합니다."); return; }
+    if (!concern) { setError("현재 가장 풀리지 않는 고민을 하나 선택해 주세요. 선택한 고민에 맞춰 결정적 '달'을 정밀하게 산출합니다."); return; }
     if (!wish) { setError("끌어당기고 싶은 절대 기운을 하나 선택해 주세요."); return; }
     const input = build();
     const err = validateInput(input);
@@ -90,7 +90,7 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
       <div className="mb-6 text-center">
         <p className="text-[11px] tracking-[0.35em] text-gold-2">四柱八字 · 五行</p>
         <h2 className="gold-text mt-1 text-2xl font-black sm:text-3xl">나의 사주 원국 열람</h2>
-        <p className="mt-2 text-sm text-fg/60">생년월일시를 입력하면 사주원국 8글자·오행 분포·일간 성향·인생 종합 총운을 무료로 풀어드립니다. 로그인은 필요 없습니다.</p>
+        <p className="mt-2 break-keep text-pretty text-sm text-fg/60">생년월일시를 입력하면 사주원국 8글자·오행 분포·일간 성향·인생 종합 총운을 무료로 풀어드립니다. 로그인은 필요 없습니다.</p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -124,7 +124,7 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
             ))}
           </div>
           {calendar === "lunar-leap" && (
-            <p className="mt-2 flex items-start gap-1.5 text-xs text-gold/85">
+            <p className="mt-2 flex items-start gap-1.5 break-keep text-xs text-gold/85">
               <Info size={13} className="mt-0.5 shrink-0" />
               {leapMonth ? `${year}년의 윤달은 윤${leapMonth}월입니다.` : `${year}년에는 윤달이 없습니다. 연도를 확인해 주세요.`}
             </p>
@@ -146,7 +146,7 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
             </select>
           </div>
           {dstHint && (
-            <p className="mt-2 flex items-start gap-1.5 text-xs text-gold/85"><Info size={13} className="mt-0.5 shrink-0" />{dstHint}</p>
+            <p className="mt-2 flex items-start gap-1.5 break-keep text-xs text-gold/85"><Info size={13} className="mt-0.5 shrink-0" />{dstHint}</p>
           )}
         </div>
 
@@ -175,11 +175,11 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
 
       {/* ───── 2차 심층 질문 ───── */}
       <div className="mt-7 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-2">
-          <p className="flex items-center gap-1.5 text-[11px] tracking-[0.3em] text-gold-2"><Target size={13} /> 2차 심층 질문 · 핀포인트 간명</p>
-          <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold"><Lock size={10} /> VIP 간명 기초 데이터</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 whitespace-nowrap text-[11px] tracking-[0.3em] text-gold-2"><Target size={13} /> 2차 심층 질문 · 정밀 간명</p>
+          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold"><Lock size={10} /> VIP 간명 기초 데이터</span>
         </div>
-        <p className="mt-1.5 text-xs leading-relaxed text-fg/55">
+        <p className="mt-1.5 break-keep text-pretty text-xs leading-relaxed text-fg/55">
           선택한 고민과 기운에 맞춰 2026 丙午·2027 丁未 세운과 12신살을 교차해 <b className="text-gold-light">결정적 달(月)·귀인 성씨·비책 물상</b>을 산출합니다.
         </p>
 
@@ -189,7 +189,7 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
             {CONCERNS.map((c) => (
               <button key={c.key} type="button" aria-pressed={concern === c.key} className={`chip ${concern === c.key ? "is-active" : ""}`} onClick={() => { setConcern(c.key); if (error) setError(null); }}>
                 <span className="text-base leading-none">{c.emoji}</span>
-                <span className="flex-1">
+                <span className="min-w-0 flex-1 break-keep">
                   <span className="block font-semibold">{c.label}</span>
                   <span className="block text-[11px] text-fg/45">{c.hint}</span>
                 </span>
@@ -203,28 +203,28 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
           <span className="mb-2 flex items-center gap-1 text-xs tracking-wider text-gold-2"><Flame size={12} /> 2. 끌어당기고 싶은 절대 기운 <span className="text-fg/40">(택1)</span></span>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {WISHES.map((w) => (
-              <button key={w.key} type="button" aria-pressed={wish === w.key} className={`chip ${wish === w.key ? "is-active" : ""} !flex-col !items-start !gap-1`} onClick={() => { setWish(w.key); if (error) setError(null); }}>
-                <span className="flex w-full items-center gap-1.5">
+              <button key={w.key} type="button" aria-pressed={wish === w.key} className={`chip relative ${wish === w.key ? "is-active" : ""} !flex-col !items-start !gap-1 !px-2 sm:!px-3`} onClick={() => { setWish(w.key); if (error) setError(null); }}>
+                <span className="flex w-full items-center gap-1 sm:gap-1.5">
                   <span className="text-base leading-none">{w.emoji}</span>
-                  <span className="font-semibold">{w.label}</span>
-                  <CheckCircle2 size={14} className="chip__check" />
+                  <span className="whitespace-nowrap break-keep text-xs font-semibold md:text-sm">{w.label}</span>
                 </span>
-                <span className="text-[11px] text-fg/45">{w.hint}</span>
+                <span className="break-keep pr-4 text-[11px] leading-snug text-fg/45">{w.hint}</span>
+                <CheckCircle2 size={14} className="chip__check !absolute bottom-2.5 right-2 !m-0" />
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {error && <p className="mt-4 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-fire-text">{error}</p>}
+      {error && <p className="mt-4 break-keep rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-fire-text">{error}</p>}
 
       <button
         type="submit"
         className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-6 py-4 text-base font-bold text-on-gold shadow-[0_8px_30px_rgba(229,184,105,.25)] transition hover:brightness-110 active:scale-[.99]"
       >
-        <Sparkles size={18} /> 핀포인트 사주 분석 시작
+        <Sparkles size={18} /> 심층 사주 분석 시작
       </button>
-      <p className="mt-3 text-center text-[11px] text-fg/40">입력 정보는 브라우저 안에서만 계산되며 서버로 전송되지 않습니다.</p>
+      <p className="mt-3 break-keep text-center text-[11px] text-fg/40">입력 정보는 브라우저 안에서만 계산되며 서버로 전송되지 않습니다.</p>
     </form>
   );
 }

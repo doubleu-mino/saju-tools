@@ -4,7 +4,7 @@ export type PlanKey = "single" | "full";
 export interface Plan { key: PlanKey; title: string; orderName: string; price: number; original?: number; badge?: string; desc: string; cta: string }
 export const PLANS: Plan[] = [
   {
-    key: "single", title: "선택 고민 핀포인트 단품 해금권", orderName: "운세로그 핀포인트 단품 해금권", price: 8900,
+    key: "single", title: "선택 고민 정밀 단품 해금권", orderName: "운세로그 정밀 단품 해금권", price: 8900,
     desc: "선택한 1개 고민의 잠긴 인라인 키워드(결정적 달·귀인 성씨·물상·격국) 즉시 확인",
     cta: "8,900원 단품 결제하기",
   },

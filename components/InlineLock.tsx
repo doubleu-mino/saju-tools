@@ -63,7 +63,7 @@ export function LockedText({ segments, onUnlock, unlocked = false }: { segments:
       {segments.map((s, i) =>
         isLock(s)
           ? unlocked ? <UnlockedValue key={i} token={s} /> : <InlineLock key={i} token={s} onUnlock={onUnlock} />
-          : <span key={i}>{s}</span>,
+          : <span key={i} className="break-keep">{s}</span>,
       )}
     </>
   );

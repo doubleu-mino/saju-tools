@@ -1,5 +1,5 @@
 /**
- * 핀포인트 예측 엔진 — 일간·일지·연지 × 2026 丙午 / 2027 丁未 세운 × 월건(月建) × 12신살 × 육친
+ * 정밀 예측 엔진 — 일간·일지·연지 × 2026 丙午 / 2027 丁未 세운 × 월건(月建) × 12신살 × 육친
  * - 고민별 결정적 '월(月)' 산출
  * - 재벌가 비전 간명식: 귀인 성씨 초성(소리오행) · 천을귀인 띠
  * - 삼재·관살·손재수 무력화 보완 오행 및 비책 물상(物象)
@@ -194,12 +194,13 @@ const SHINSAL_KEYWORD: Record<Shinsal, string> = {
   겁살: "지출·분실 경계", 재살: "구설·송사 경계", 천살: "돌발 변수 주의", 지살: "이동·변동", 년살: "매력·만남", 월살: "정체·답답함",
   망신살: "체면·실수 주의", 장성살: "주도권·승부", 반안살: "안정·승진", 역마살: "출장·이동·변화", 육해살: "피로·건강 관리", 화개살: "학습·내면·정리",
 };
-export const TIER_META: Record<MonthTier, { label: string; emoji: string }> = {
-  golden: { label: "운기 최정점 황금의 달", emoji: "👑" },
-  danger: { label: "각별 주의 손재수의 달", emoji: "⚠️" },
-  opportunity: { label: "기회", emoji: "🔥" },
-  rising: { label: "상승", emoji: "📈" },
-  calm: { label: "평온", emoji: "🌙" },
+/** label: 범례·설명용 전체 명칭 / short: 월운 타일 배지용 짧은 명칭 (좁은 타일에서 글자가 쪼개지지 않도록) */
+export const TIER_META: Record<MonthTier, { label: string; short: string; emoji: string }> = {
+  golden: { label: "운기 최정점 황금의 달", short: "황금의 달", emoji: "👑" },
+  danger: { label: "각별 주의 손재수의 달", short: "손재수의 달", emoji: "⚠️" },
+  opportunity: { label: "기회", short: "기회", emoji: "🔥" },
+  rising: { label: "상승", short: "상승", emoji: "📈" },
+  calm: { label: "평온", short: "평온", emoji: "🌙" },
 };
 
 function buildTimeline(r: SajuResult, year: number): YearTimeline {

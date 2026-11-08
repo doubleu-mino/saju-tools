@@ -16,7 +16,7 @@ export const QUICK_CARDS: QuickCard[] = [
 export default function QuickCards({ active, onPick }: { active: ConcernKey | null; onPick: (c: ConcernKey) => void }) {
   return (
     <section aria-label="핵심 고민 바로 선택" className="animate-rise delay-3 mb-6">
-      <p className="mb-3 text-center text-[11px] tracking-[0.3em] text-gold-2">지금 가장 풀리지 않는 질문 하나를 고르세요</p>
+      <p className="mb-3 break-keep text-center text-[11px] tracking-[0.3em] text-gold-2">지금 가장 풀리지 않는 질문 하나를 고르세요</p>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {QUICK_CARDS.map((c) => {
           const isActive = active === c.concern;
@@ -30,8 +30,8 @@ export default function QuickCards({ active, onPick }: { active: ConcernKey | nu
             >
               <span className="text-2xl leading-none" aria-hidden="true">{c.emoji}</span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-bold leading-snug text-fg/90 group-hover:text-gold-light">{c.title}</span>
-                <span className="mt-0.5 block text-xs text-fg/50">{c.desc}</span>
+                <span className="block break-keep text-pretty text-[15px] font-bold leading-snug text-fg/90 group-hover:text-gold-light">{c.title}</span>
+                <span className="mt-0.5 block break-keep text-pretty text-xs leading-snug text-fg/50">{c.desc}</span>
               </span>
               <ChevronRight size={16} className="shrink-0 text-gold-2/60 transition group-hover:translate-x-0.5 group-hover:text-gold" />
             </button>

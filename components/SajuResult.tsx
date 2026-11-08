@@ -57,8 +57,8 @@ function Section({ no, title, sub, children }: { no: string; title: string; sub:
     <section className="card ornament animate-rise rounded-2xl p-5 sm:p-8">
       <div className="mb-6">
         <p className="text-[11px] tracking-[0.35em] text-gold-2">PART {no}</p>
-        <h3 className="gold-text mt-1 text-xl font-black sm:text-2xl">{title}</h3>
-        <p className="mt-1 text-sm text-fg/55">{sub}</p>
+        <h3 className="gold-text mt-1 break-keep text-balance text-xl font-black sm:text-2xl">{title}</h3>
+        <p className="mt-1 break-keep text-pretty text-sm text-fg/55">{sub}</p>
       </div>
       {children}
     </section>
@@ -72,7 +72,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
   const cur = currentDaeun(r);
   const displayPillars = [...r.pillars].reverse(); // 시·일·월·연 (전통 표기 순)
 
-  // 핀포인트 리포트 (고민·절대 기운 × 2026·2027 세운 × 12신살)
+  // 정밀 리포트 (고민·절대 기운 × 2026·2027 세운 × 12신살)
   const pin = useMemo(() => buildPinpoint(r), [r]);
   const y26 = useMemo(() => yearGodSummary(r, 2026), [r]);
   const y27 = useMemo(() => yearGodSummary(r, 2027), [r]);
@@ -110,7 +110,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
         <h2 className="mt-2 text-2xl font-black sm:text-3xl">
           <span className="gold-text">{who}의 사주 원국</span>
         </h2>
-        <p className="mt-2 text-sm text-fg/65">
+        <p className="mt-2 break-keep text-pretty text-sm text-fg/65">
           양력 {r.solar.year}.{String(r.solar.month).padStart(2, "0")}.{String(r.solar.day).padStart(2, "0")}
           <span className="mx-2 text-gold-2/50">|</span>
           음력 {r.lunar.year}.{r.lunar.isLeap ? "윤" : ""}{String(r.lunar.month).padStart(2, "0")}.{String(r.lunar.day).padStart(2, "0")}
@@ -156,7 +156,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
           </div>
         </div>
         {!r.hourKnown && (
-          <p className="mt-3 text-xs text-fg/45">※ 출생 시간을 모르는 경우 시주를 제외한 6글자로 분석합니다. 시간을 알게 되면 더 정밀한 풀이가 가능합니다.</p>
+          <p className="mt-3 break-keep text-xs text-fg/45">※ 출생 시간을 모르는 경우 시주를 제외한 6글자로 분석합니다. 시간을 알게 되면 더 정밀한 풀이가 가능합니다.</p>
         )}
       </Section>
 
@@ -183,7 +183,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
           <div className="rounded-xl border border-gold-2/25 bg-ink/50 p-4">
             <p className="text-[11px] tracking-wider text-gold-2">가장 강한 기운 (과다)</p>
             <p className="mt-1 text-xl font-black" style={{ color: r.strongest === "수" ? "var(--water-text)" : ELEMENT_COLOR[r.strongest] }}>{r.strongest}({ELEMENT_HANJA[r.strongest]})</p>
-            <p className="mt-2 text-sm leading-relaxed text-fg/75">{EXCESS_TEXT[r.strongest]}</p>
+            <p className="mt-2 text-sm leading-relaxed text-fg/75 break-keep">{EXCESS_TEXT[r.strongest]}</p>
           </div>
           <div className="rounded-xl border border-gold-2/25 bg-ink/50 p-4">
             <p className="text-[11px] tracking-wider text-gold-2">부족한 기운 (결핍)</p>
@@ -191,7 +191,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
               {r.missing.length ? r.missing.map((m) => `${m}(${ELEMENT_HANJA[m]})`).join(" · ") : `${r.weakest}(${ELEMENT_HANJA[r.weakest]})`}
               <span className="ml-2 text-xs font-normal text-fg/50">{r.missing.length ? "원국에 없음" : "가장 약함"}</span>
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-fg/75">{LACK_TEXT[r.missing[0] ?? r.weakest]}</p>
+            <p className="mt-2 text-sm leading-relaxed text-fg/75 break-keep">{LACK_TEXT[r.missing[0] ?? r.weakest]}</p>
           </div>
         </div>
         <div className="mt-4 rounded-xl border border-gold-2/15 bg-ink/30 p-4 text-sm">
@@ -201,7 +201,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
               <span key={k} className="rounded-full border border-gold-2/25 px-3 py-1 text-fg/80">{k} <b className="text-gold">{v}</b></span>
             ))}
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-fg/55">{r.strength.note}</p>
+          <p className="mt-3 text-xs leading-relaxed text-fg/55 break-keep">{r.strength.note}</p>
         </div>
       </Section>
 
@@ -213,10 +213,10 @@ export default function SajuResult({ result: r, onReset }: Props) {
         <div className="mt-5 space-y-5 text-[15px] leading-[1.9] text-fg/85">
           <p>{profile.nature}</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-[#2F9E8F]/30 bg-[#2F9E8F]/5 p-4"><p className="mb-1 text-xs tracking-wider text-wood-text">강점</p><p className="text-sm leading-relaxed">{profile.strength}</p></div>
-            <div className="rounded-xl border border-[#C2413B]/30 bg-[#C2413B]/5 p-4"><p className="mb-1 text-xs tracking-wider text-fire-text">주의</p><p className="text-sm leading-relaxed">{profile.caution}</p></div>
-            <div className="rounded-xl border border-[#C08A3E]/30 bg-[#C08A3E]/5 p-4"><p className="mb-1 text-xs tracking-wider text-earth-text">대인관계</p><p className="text-sm leading-relaxed">{profile.relation}</p></div>
-            <div className="rounded-xl border border-[#C9CFD6]/30 bg-[#C9CFD6]/5 p-4"><p className="mb-1 text-xs tracking-wider text-metal-text">일과 재능</p><p className="text-sm leading-relaxed">{profile.work}</p></div>
+            <div className="rounded-xl border border-[#2F9E8F]/30 bg-[#2F9E8F]/5 p-4"><p className="mb-1 text-xs tracking-wider text-wood-text">강점</p><p className="text-sm leading-relaxed break-keep">{profile.strength}</p></div>
+            <div className="rounded-xl border border-[#C2413B]/30 bg-[#C2413B]/5 p-4"><p className="mb-1 text-xs tracking-wider text-fire-text">주의</p><p className="text-sm leading-relaxed break-keep">{profile.caution}</p></div>
+            <div className="rounded-xl border border-[#C08A3E]/30 bg-[#C08A3E]/5 p-4"><p className="mb-1 text-xs tracking-wider text-earth-text">대인관계</p><p className="text-sm leading-relaxed break-keep">{profile.relation}</p></div>
+            <div className="rounded-xl border border-[#C9CFD6]/30 bg-[#C9CFD6]/5 p-4"><p className="mb-1 text-xs tracking-wider text-metal-text">일과 재능</p><p className="text-sm leading-relaxed break-keep">{profile.work}</p></div>
           </div>
         </div>
       </Section>
@@ -235,8 +235,8 @@ export default function SajuResult({ result: r, onReset }: Props) {
         <div className="space-y-5">
           {life.sections.map((s) => (
             <div key={s.heading} className="border-l-2 border-gold-2/50 pl-4">
-              <h4 className="font-bold text-gold-light">{s.heading}</h4>
-              <p className="mt-1.5 text-[15px] leading-[1.9] text-fg/85">{s.body}</p>
+              <h4 className="break-keep font-bold text-gold-light">{s.heading}</h4>
+              <p className="mt-1.5 text-[15px] leading-[1.9] text-fg/85 break-keep">{s.body}</p>
             </div>
           ))}
         </div>
@@ -296,7 +296,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
       {/* PART 5 — 선택한 고민 심층 타겟 리포트 (인라인 키워드 락) */}
       <Section no="05" title={`${pin.concern.emoji} ${pin.concernTitle}`} sub={pin.concernSummary}>
         {/* 세운 뱃지 */}
-        <div className="mb-5 flex flex-wrap items-center gap-2 text-[11px]">
+        <div className="mb-5 flex flex-wrap items-center gap-2 text-[11px] [&>span]:whitespace-nowrap">
           <span className="inline-flex items-center gap-1 rounded-full border border-gold/50 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Target size={11} /> 선택한 고민 · {pin.concern.short}</span>
           <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">2026 {y26.ko}({y26.ganzhi}) · {y26.stemGod}/{y26.branchGod}</span>
           <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">2027 {y27.ko}({y27.ganzhi}) · {y27.stemGod}/{y27.branchGod}</span>
@@ -306,8 +306,8 @@ export default function SajuResult({ result: r, onReset }: Props) {
         <div className="space-y-6">
           {pin.concernParas.map((para, i) => (
             <div key={i} className="border-l-2 border-gold-2/50 pl-4">
-              <h4 className="font-bold text-gold-light">{para.heading}</h4>
-              <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85">
+              <h4 className="break-keep font-bold text-gold-light">{para.heading}</h4>
+              <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85 break-keep">
                 <LockedText segments={para.segments} onUnlock={openVip} unlocked={scope.inline} />
               </p>
             </div>
@@ -319,8 +319,8 @@ export default function SajuResult({ result: r, onReset }: Props) {
           <p className="flex items-center gap-1.5 text-[11px] tracking-[0.3em] text-gold-2"><Flame size={12} /> 끌어당기고 싶은 절대 기운 · {pin.wish.short}</p>
           {pin.wishParas.map((para) => (
             <div key={para.heading} className="mt-3">
-              <h4 className="font-bold text-gold-light">{para.heading}</h4>
-              <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85">
+              <h4 className="break-keep font-bold text-gold-light">{para.heading}</h4>
+              <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85 break-keep">
                 <LockedText segments={para.segments} onUnlock={openVip} unlocked={scope.inline} />
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
                 <span className="inline-unlocked !m-0"><Unlock size={11} /> {pin.benefactor.consonants[0]}</span>
                 <span className="inline-unlocked !m-0"><Unlock size={11} /> {pin.benefactor.consonants[1]}</span>
               </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-fg/60">예: {pin.benefactor.surnames[0]} / {pin.benefactor.surnames[1]} · 천을귀인 {pin.benefactor.zodiacs.join("·")}띠</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-fg/60 break-keep">예: {pin.benefactor.surnames[0]} / {pin.benefactor.surnames[1]} · 천을귀인 {pin.benefactor.zodiacs.join("·")}띠</p>
             </div>
             <div className="gold-open-card rounded-xl p-4 text-left">
               <p className="text-[11px] tracking-wider text-gold-2">삼재·관살·손재수 무력화 비책</p>
@@ -376,11 +376,11 @@ export default function SajuResult({ result: r, onReset }: Props) {
           </div>
         )}
         {unlock?.plan === "single" && !scope.inline && (
-          <p className="mt-3 rounded-lg border border-gold-2/30 bg-gold/5 px-3 py-2 text-[12px] leading-relaxed text-fg/65">
+          <p className="mt-3 rounded-lg border border-gold-2/30 bg-gold/5 px-3 py-2 text-[12px] leading-relaxed text-fg/65 break-keep">
             보유하신 단품 해금권은 구매 당시 선택한 고민에만 적용됩니다. 다른 고민의 키워드는 풀패키지로 열 수 있습니다.
           </p>
         )}
-        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-fg/40"><ShieldAlert size={12} className="mt-0.5 shrink-0" /> 월운은 절입일(매월 4~8일) 기준 월건으로 산출되며, 달력 월과 수일의 차이가 있을 수 있습니다. {scope.inline ? "해금된 값은 전통 명리학 이론에 따른 참고 자료입니다." : "자물쇠 항목은 VIP 간명 해금 시 공개됩니다."}</p>
+        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-fg/40 break-keep"><ShieldAlert size={12} className="mt-0.5 shrink-0" /> 월운은 절입일(매월 4~8일) 기준 월건으로 산출되며, 달력 월과 수일의 차이가 있을 수 있습니다. {scope.inline ? "해금된 값은 전통 명리학 이론에 따른 참고 자료입니다." : "자물쇠 항목은 VIP 간명 해금 시 공개됩니다."}</p>
       </Section>
 
       {/* PART 6 — 12개월 운세 캘린더 타임라인 */}
@@ -400,7 +400,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1.5 text-[11px]">
+          <div className="flex flex-wrap gap-1.5 text-[11px] [&>span]:whitespace-nowrap">
             {timeline.samjae && <span className="rounded-full border border-[#C2413B]/50 bg-[#C2413B]/10 px-2.5 py-1 font-semibold text-fire-text">{r.zodiac}띠 {timeline.samjae}</span>}
             {(["opportunity", "rising", "calm"] as const).map((k) => (
               <span key={k} className="rounded-full border border-gold-2/25 bg-ink/50 px-2.5 py-1 text-fg/65">{TIER_META[k].emoji} {TIER_META[k].label}</span>
@@ -418,13 +418,13 @@ export default function SajuResult({ result: r, onReset }: Props) {
         </div>
 
         {scope.timeline ? (
-          <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm leading-relaxed text-fg/80">
+          <div className="mt-5 break-keep text-pretty rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm leading-relaxed text-fg/80">
             <Crown size={14} className="mr-1 inline text-gold" />
             {timeline.year}년 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">황금의 달은 {timeline.golden}월</b>, <b className="text-fire-text">손재수의 달은 {timeline.danger}월</b>입니다. 황금의 달에는 계약·고백·착수를, 손재수의 달에는 고액 지출·보증·원행을 피하는 쪽으로 일정을 잡으세요.
           </div>
         ) : (
           <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
-            <p className="leading-relaxed text-fg/80">
+            <p className="leading-relaxed text-fg/80 break-keep">
               <Crown size={14} className="mr-1 inline text-gold" />
               잠긴 두 달 중 하나는 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">운기 최정점 황금의 달</b>, 다른 하나는 <b className="text-fire-text">각별 주의 손재수의 달</b>입니다. {unlock?.plan === "single" ? "타임라인 두 달은 풀패키지에서 열립니다." : "기운이 화합하는 시기를 아는 것이 한 해 발복 확률을 극대화하는 핵심입니다."}
             </p>
@@ -500,11 +500,11 @@ function MonthTile({ m, t, unlocked, onUnlock }: { m: MonthCard; t: YearTimeline
             <span style={{ color: m.branchElement === "수" ? "var(--water-text)" : ELEMENT_COLOR[m.branchElement] }}>{m.ganzhi[1]}</span>
           </span>
         </div>
-        <span className={`mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${danger ? "bg-[#C2413B]/25 text-fire-text" : "bg-gold/25 text-gold-light"}`}>
-          {meta.emoji} {meta.label}
+        <span className={`mt-1.5 inline-flex max-w-full w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold ${danger ? "bg-[#C2413B]/25 text-fire-text" : "bg-gold/25 text-gold-light"}`}>
+          {meta.emoji} {meta.short}
         </span>
-        <p className="mt-2 text-[11px] leading-snug text-fg/75">{m.keyword}</p>
-        <p className="mt-auto pt-2 text-[10px] text-fg/50">{m.stemGod}·{m.branchGod} · {m.shinsal}</p>
+        <p className="mt-2 text-[11px] leading-snug text-fg/75 break-keep">{m.keyword}</p>
+        <p className="mt-auto break-keep pt-2 text-[10px] text-fg/50">{m.stemGod}·{m.branchGod} · {m.shinsal}</p>
       </div>
     );
   }
@@ -521,7 +521,7 @@ function MonthTile({ m, t, unlocked, onUnlock }: { m: MonthCard; t: YearTimeline
           <Lock size={20} />
         </span>
         <span className="mt-2 text-xs font-bold text-gold-light">🔒 VIP 열람</span>
-        <span className="mt-0.5 text-[10px] leading-tight text-fg/55">황금의 달 or 손재수의 달</span>
+        <span className="mt-0.5 break-keep text-[10px] leading-tight text-fg/55">황금의 달 또는 손재수의 달</span>
       </button>
     );
   }
@@ -535,11 +535,11 @@ function MonthTile({ m, t, unlocked, onUnlock }: { m: MonthCard; t: YearTimeline
           <span style={{ color: m.branchElement === "수" ? "var(--water-text)" : ELEMENT_COLOR[m.branchElement] }}>{m.ganzhi[1]}</span>
         </span>
       </div>
-      <span className={`mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${m.tier === "opportunity" ? "bg-wood/20 text-wood-text" : m.tier === "rising" ? "bg-gold/15 text-gold-light" : "bg-fg/10 text-fg/65"}`}>
-        {meta.emoji} {meta.label}
+      <span className={`mt-1.5 inline-flex max-w-full w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${m.tier === "opportunity" ? "bg-wood/20 text-wood-text" : m.tier === "rising" ? "bg-gold/15 text-gold-light" : "bg-fg/10 text-fg/65"}`}>
+        {meta.emoji} {meta.short}
       </span>
-      <p className="mt-2 text-[11px] leading-snug text-fg/65">{m.keyword}</p>
-      <p className="mt-auto pt-2 text-[10px] text-fg/40">{m.stemGod}·{m.branchGod} · {m.shinsal}</p>
+      <p className="mt-2 text-[11px] leading-snug text-fg/65 break-keep">{m.keyword}</p>
+      <p className="mt-auto break-keep pt-2 text-[10px] text-fg/40">{m.stemGod}·{m.branchGod} · {m.shinsal}</p>
     </div>
   );
 }
