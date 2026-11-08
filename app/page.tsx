@@ -1,7 +1,7 @@
 import SajuApp from "@/components/SajuApp";
 import TrustBadges from "@/components/TrustBadges";
 import { Scroll, Scale, Sparkles, Moon } from "lucide-react";
-import { SITE_NAME, SITE_NAME_EN } from "@/lib/site";
+import { SITE_NAME, SITE_NAME_EN, SITE_TAGLINE } from "@/lib/site";
 
 const FEATURES = [
   { icon: Scroll, title: "절기 기준 정통 산출", desc: "입춘·경칩 등 12절(節)의 실제 천문 시각으로 연주·월주를 세웁니다." },
@@ -17,15 +17,11 @@ export default function Home() {
       <section className="mb-8 text-center">
         <p className="animate-rise text-xs tracking-[0.5em] text-gold-2">{SITE_NAME_EN.toUpperCase()} · 正統 萬歲曆 · 24個月 타임라인</p>
         <h1 className="animate-rise delay-1 mt-4 break-keep text-balance text-3xl font-black leading-[1.25] sm:text-4xl md:text-5xl">
-          <span className="text-fg">좋은 말로 위로하지 않습니다.</span>
-          <br />
-          <span className="gold-text">피해야 할 손재수의 달까지 데이터로 짚습니다.</span>
+          <span className="block text-fg">때를 읽는 정통 사주,</span>
+          <span className="gold-text mt-1 block">{SITE_NAME}</span>
         </h1>
-        <p className="animate-rise delay-2 mt-4 break-keep text-pretty text-sm tracking-[0.12em] text-gold-2 sm:text-base">천문 절기·진태양시 보정 기반 정통 만세력 &amp; 24개월 타임라인 | {SITE_NAME}</p>
-        <p className="animate-rise delay-2 mx-auto mt-4 max-w-2xl break-keep text-pretty text-base leading-relaxed text-fg/65 sm:text-lg">
-          <span className="block">사주원국 8글자와 오행 분포, 일간의 본성과 인생 종합 총운은 무료로 완전 공개합니다.</span>
-          <span className="mt-1 block">결정적 달(月)·귀인 성씨·황금의 달과 손재수의 달은 데이터로 산출해 해금 시 그대로 보여드립니다.</span>
-        </p>
+        <p className="animate-rise delay-2 mx-auto mt-4 max-w-2xl break-keep text-pretty text-base leading-relaxed text-fg/70 sm:text-lg">{SITE_TAGLINE}</p>
+        <p className="animate-rise delay-2 mt-3 break-keep text-pretty text-xs text-fg/45 sm:text-sm">사주원국·오행·일간·종합 총운은 무료, 황금의 달과 손재수의 달은 해금 시 데이터 그대로 공개합니다.</p>
         <div className="animate-rise delay-3 mt-7"><TrustBadges /></div>
       </section>
 

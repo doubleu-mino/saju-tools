@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HomeLink from "./HomeLink";
 import ThemeToggle from "./ThemeToggle";
 import { SITE_NAME, SITE_NAME_EN } from "@/lib/site";
 
@@ -6,7 +7,7 @@ export default function Header() {
   return (
     <header className="relative z-20 border-b border-gold-2/20 bg-ink/70 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="group flex items-center gap-2.5" aria-label={`${SITE_NAME} 홈`}>
+        <HomeLink className="group flex items-center gap-2.5" ariaLabel={`${SITE_NAME} 홈`}>
           <span
             className="grid h-10 w-10 place-items-center rounded-full border border-gold-2/40 bg-ink-3 text-xl font-black text-gold transition group-hover:rotate-12"
             style={{ fontFamily: "var(--font-hanja)" }}
@@ -18,7 +19,7 @@ export default function Header() {
             <span className="block text-[11px] tracking-[0.35em] text-gold-2">{SITE_NAME_EN.toUpperCase()}</span>
             <span className="gold-text block text-lg font-black tracking-wide">{SITE_NAME}</span>
           </span>
-        </Link>
+        </HomeLink>
         <div className="flex items-center gap-3 sm:gap-5">
           <nav className="flex items-center gap-4 text-sm text-fg/70">
             <Link href="/about/" className="hover:text-gold">계산 방식·검증</Link>

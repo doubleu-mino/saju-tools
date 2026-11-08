@@ -31,7 +31,9 @@ export default function QuickCards({ active, onPick }: { active: ConcernKey | nu
               <span className="text-2xl leading-none" aria-hidden="true">{c.emoji}</span>
               <span className="min-w-0 flex-1">
                 <span className="block break-keep text-pretty text-[15px] font-bold leading-snug text-fg/90 group-hover:text-gold-light">{c.title}</span>
-                <span className="mt-0.5 block break-keep text-pretty text-xs leading-snug text-fg/50">{c.desc}</span>
+                <span className="mt-0.5 block break-keep text-xs leading-snug text-fg/50">
+                  {c.desc.split(" · ").map((part, i) => <span key={part} className="inline-block">{i > 0 && <span className="mx-1 text-fg/30">·</span>}{part}</span>)}
+                </span>
               </span>
               <ChevronRight size={16} className="shrink-0 text-gold-2/60 transition group-hover:translate-x-0.5 group-hover:text-gold" />
             </button>

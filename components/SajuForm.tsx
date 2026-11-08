@@ -191,7 +191,9 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
                 <span className="text-base leading-none">{c.emoji}</span>
                 <span className="min-w-0 flex-1 break-keep">
                   <span className="block font-semibold">{c.label}</span>
-                  <span className="block text-[11px] text-fg/45">{c.hint}</span>
+                  <span className="block text-[11px] leading-snug text-fg/45">
+                    {c.hint.split(" · ").map((part, i) => <span key={part} className="inline-block">{i > 0 && <span className="mx-1 text-fg/30">·</span>}{part}</span>)}
+                  </span>
                 </span>
                 <CheckCircle2 size={16} className="chip__check" />
               </button>
@@ -208,7 +210,9 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
                   <span className="text-base leading-none">{w.emoji}</span>
                   <span className="whitespace-nowrap break-keep text-xs font-semibold md:text-sm">{w.label}</span>
                 </span>
-                <span className="break-keep pr-4 text-[11px] leading-snug text-fg/45">{w.hint}</span>
+                <span className="break-keep pr-4 text-[11px] leading-snug text-fg/45">
+                  {w.hint.split(" · ").map((part) => <span key={part} className="block">{part}</span>)}
+                </span>
                 <CheckCircle2 size={14} className="chip__check !absolute bottom-2.5 right-2 !m-0" />
               </button>
             ))}

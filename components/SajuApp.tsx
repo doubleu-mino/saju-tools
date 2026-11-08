@@ -6,6 +6,7 @@ import LoadingCompass from "./LoadingCompass";
 import SajuResult from "./SajuResult";
 import TrustBadges from "./TrustBadges";
 import QuickCards from "./QuickCards";
+import { HOME_RESET_EVENT } from "./HomeLink";
 import { SajuInput, SajuResult as SajuResultType, ConcernKey, calculateSaju, decodeInput, encodeInput } from "@/lib/saju";
 
 type Stage = "form" | "loading" | "result";
@@ -45,12 +46,21 @@ export default function SajuApp() {
     return () => window.clearTimeout(id);
   }, [run]);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setStage("form");
     setResult(null);
+    setError(null);
+    setPresetConcern(null);
     window.history.replaceState(null, "", window.location.pathname);
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  }, []);
+
+  // 헤더 로고 클릭 → 결과 화면을 입력 폼으로 초기화하고 최상단으로
+  useEffect(() => {
+    const onHome = () => { reset(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+    window.addEventListener(HOME_RESET_EVENT, onHome);
+    return () => window.removeEventListener(HOME_RESET_EVENT, onHome);
+  }, [reset]);
 
   /** 퀵 카드 선택 → 폼의 고민 칩 즉시 선택 + 폼으로 부드럽게 스크롤 */
   const pickConcern = (c: ConcernKey) => {

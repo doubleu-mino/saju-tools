@@ -3,8 +3,8 @@ export const SITE_URL = "https://unselog.com";
 export const SITE_DOMAIN = "unselog.com";
 export const SITE_NAME = "운세로그";
 export const SITE_NAME_EN = "UnseLog";
-export const SITE_TITLE = "좋은 말로 위로하지 않습니다. 피해야 할 손재수의 달까지 데이터로 짚습니다.";
-export const SITE_TAGLINE = "천문 절기·진태양시 보정 기반 정통 만세력 & 24개월 타임라인 | 운세로그";
+export const SITE_TITLE = "때를 읽는 정통 사주, 운세로그";
+export const SITE_TAGLINE = "천문 절기와 진태양시로 풀어낸 24개월 정밀 만세력";
 export const SITE_DESC =
   "운세로그(UnseLog)는 24절기 천문 시각·진태양시·한국 서머타임을 자동 보정한 정통 만세력으로 사주팔자 8글자, 오행 분포, 일간 성향, 인생 종합 총운을 무료로 분석합니다. 2026 병오년·2027 정미년 24개월 타임라인에서 황금의 달과 손재수의 달까지 데이터로 짚습니다. 로그인·회원가입 없음, 입력 데이터 서버 미전송.";
 

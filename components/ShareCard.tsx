@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Link2, MessageCircle, Share2, Check } from "lucide-react";
 import { SajuResult, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, ELEMENTS, BRANCH_ANIMAL, Element, encodeInput } from "@/lib/saju";
 import { yearKeyword } from "@/lib/pinpoint";
-import { SITE_NAME, SITE_NAME_EN, SITE_DOMAIN } from "@/lib/site";
+import { SITE_NAME, SITE_NAME_EN, SITE_DOMAIN, SITE_TAGLINE } from "@/lib/site";
 
 /* ───────── 수호 동물: 일간 오행의 색(靑赤黃白黑) + 일지 동물 ───────── */
 const GUARDIAN_COLOR: Record<Element, [string, string]> = { 목: ["청", "靑"], 화: ["적", "赤"], 토: ["황", "黃"], 금: ["백", "白"], 수: ["흑", "黑"] };
@@ -152,7 +152,7 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
 
     /* ── 푸터 워터마크 ── */
     ctx.fillStyle = "rgba(239,230,210,.5)"; ctx.font = `400 24px ${serif}`;
-    ctx.fillText("좋은 말로 위로하지 않습니다. 손재수의 달까지 데이터로 짚습니다.", W / 2, 1770);
+    ctx.fillText(`때를 읽는 정통 사주 · ${SITE_TAGLINE}`, W / 2, 1770);
     ctx.fillStyle = "#E5B869"; ctx.font = `700 30px ${serif}`;
     ctx.fillText(`내 사주 무료 간명하기  |  ${SITE_NAME} · ${SITE_DOMAIN}`, W / 2, 1826);
   }, [r]);
