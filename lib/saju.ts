@@ -14,7 +14,9 @@ export type Element = "목" | "화" | "토" | "금" | "수";
 export type YinYang = "양" | "음";
 export type Gender = "male" | "female";
 export type CalendarType = "solar" | "lunar" | "lunar-leap";
-export type ThemeKey = "wealth" | "career" | "love" | "life";
+export type ThemeKey = "wealth" | "career" | "love" | "health" | "life";
+/** 유료(VIP) 심층 리포트 탭으로 노출되는 테마 */
+export type ReportThemeKey = Exclude<ThemeKey, "life">;
 export type RegionKey = "seoul" | "busan" | "gwangju" | "daejeon" | "gangwon" | "jeju";
 
 export const STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] as const;
@@ -130,11 +132,14 @@ export const REGIONS: Region[] = [
 ];
 
 export const THEMES: { key: ThemeKey; emoji: string; label: string; short: string }[] = [
-  { key: "wealth", emoji: "💰", label: "재물·사업운", short: "재물" },
-  { key: "career", emoji: "💼", label: "직장·이직운", short: "직장" },
+  { key: "wealth", emoji: "💰", label: "재물운", short: "재물" },
+  { key: "career", emoji: "💼", label: "직장·사업운", short: "직장" },
   { key: "love", emoji: "❤️", label: "연애·결혼운", short: "연애" },
-  { key: "life", emoji: "📜", label: "인생총운·대운", short: "총운" },
+  { key: "health", emoji: "🌿", label: "건강·체질운", short: "건강" },
+  { key: "life", emoji: "📜", label: "인생 종합 총운", short: "총운" },
 ];
+/** 결과 화면 하단 테마 탭 (인생 총운은 무료로 전체 공개되므로 제외) */
+export const REPORT_THEMES = THEMES.filter((t): t is typeof t & { key: ReportThemeKey } => t.key !== "life");
 
 export const YEAR_MIN = 1940;
 export const YEAR_MAX = 2026;

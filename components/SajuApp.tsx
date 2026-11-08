@@ -53,7 +53,7 @@ export default function SajuApp() {
     <div ref={topRef} className="scroll-mt-20">
       {stage === "form" && (
         <>
-          {error && <p className="mb-4 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-[#F5B5B0]">{error}</p>}
+          {error && <p className="mb-4 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-fire-text">{error}</p>}
           <SajuForm initial={input} onSubmit={run} />
         </>
       )}

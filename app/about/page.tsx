@@ -3,14 +3,14 @@ import StaticPage from "@/components/StaticPage";
 
 export const metadata: Metadata = {
   title: "만세력 알고리즘 소개",
-  description: "사주툴스 만세력이 연주·월주·일주·시주를 산출하는 방식과 진태양시·서머타임·절기 보정 원리를 설명합니다.",
+  description: "명리원 만세력이 연주·월주·일주·시주를 산출하는 방식과 진태양시·서머타임·절기 보정 원리를 설명합니다.",
 };
 
 export default function AboutPage() {
   return (
     <StaticPage eyebrow="ABOUT" title="만세력 알고리즘 소개">
       <p>
-        사주툴스 萬歲曆은 전통 명리학의 산출 원칙을 그대로 따르되, 천문 계산과 역사적 표준시 변경 이력을 반영하여 오차를 최소화한
+        명리원(明理院)은 전통 명리학의 산출 원칙을 그대로 따르되, 천문 계산과 역사적 표준시 변경 이력을 반영하여 오차를 최소화한
         만세력입니다. 모든 계산은 이용자의 브라우저(클라이언트) 안에서만 이루어지며 서버와 통신하지 않습니다.
       </p>
 

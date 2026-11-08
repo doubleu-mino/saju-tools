@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Link2, MessageCircle, Share2, Check } from "lucide-react";
-import { SajuResult, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, encodeInput, THEMES } from "@/lib/saju";
+import { SajuResult, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, encodeInput } from "@/lib/saju";
 
 declare global {
   interface Window {
@@ -50,7 +50,7 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
     const serif = `"Noto Serif KR", "Nanum Myeongjo", "Apple SD Gothic Neo", serif`;
     ctx.textAlign = "center";
     ctx.fillStyle = "#C5A059"; ctx.font = `500 26px ${serif}`;
-    ctx.fillText("四 柱 八 字 · 萬 歲 曆", W / 2, 130);
+    ctx.fillText("明 理 院 · 四 柱 八 字 · 萬 歲 曆", W / 2, 130);
 
     ctx.fillStyle = "#E5B869"; ctx.font = `900 64px ${serif}`;
     ctx.fillText(`${r.name ? `${r.name}님` : "나"}의 사주 원국`, W / 2, 215);
@@ -105,18 +105,17 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
     ctx.fillStyle = "rgba(239,230,210,.75)"; ctx.font = `400 26px ${serif}`;
     ctx.fillText(`강한 기운 ${r.strongest}(${ELEMENT_HANJA[r.strongest]})  ·  보충할 기운 ${(r.missing[0] ?? r.weakest)}(${ELEMENT_HANJA[r.missing[0] ?? r.weakest]})`, W / 2, 1070);
 
-    const theme = THEMES.find((t) => t.key === r.input.theme)!;
     ctx.fillStyle = "rgba(239,230,210,.55)"; ctx.font = `400 24px ${serif}`;
-    ctx.fillText(`관심 테마 · ${theme.label}`, W / 2, 1120);
+    ctx.fillText("하늘이 내린 명(命)을 풀고, 때(時)를 읽다", W / 2, 1120);
 
     ctx.fillStyle = "#C5A059"; ctx.font = `600 24px ${serif}`;
-    ctx.fillText("평생 무료 정통 만세력 · saju-tools", W / 2, 1250);
+    ctx.fillText("명리원 明理院 · 정통 만세력 무료 사주 분석", W / 2, 1250);
   }, [r]);
 
   const download = useCallback(() => {
     const c = canvasRef.current; if (!c) return;
     const a = document.createElement("a");
-    a.download = `saju-${r.solar.year}${String(r.solar.month).padStart(2, "0")}${String(r.solar.day).padStart(2, "0")}.png`;
+    a.download = `myeongri-${r.solar.year}${String(r.solar.month).padStart(2, "0")}${String(r.solar.day).padStart(2, "0")}.png`;
     a.href = c.toDataURL("image/png");
     a.click();
   }, [r]);
@@ -129,7 +128,7 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
 
   const webShare = useCallback(async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: "사주툴스 萬歲曆", text, url: shareUrl }); return; } catch { /* cancelled */ }
+      try { await navigator.share({ title: "명리원 (明理院) 사주 분석", text, url: shareUrl }); return; } catch { /* cancelled */ }
     }
     copy();
   }, [shareUrl, text, copy]);
@@ -157,21 +156,21 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
 
   return (
     <div className="grid gap-5 md:grid-cols-[minmax(0,360px)_1fr]">
-      <canvas ref={canvasRef} className="w-full rounded-xl border border-[#C5A059]/30 shadow-[0_12px_40px_rgba(0,0,0,.5)]" aria-label="사주 공유 카드 미리보기" />
+      <canvas ref={canvasRef} className="w-full rounded-xl border border-gold-2/30 shadow-[0_12px_40px_rgba(0,0,0,.5)]" aria-label="사주 공유 카드 미리보기" />
       <div className="flex flex-col justify-center gap-3">
         <button onClick={kakao} className="flex items-center justify-center gap-2 rounded-xl bg-[#FEE500] px-5 py-3.5 font-bold text-[#191919] transition hover:brightness-95">
           <MessageCircle size={18} fill="#191919" /> 카카오톡으로 공유
         </button>
-        <button onClick={webShare} className="flex items-center justify-center gap-2 rounded-xl border border-[#C5A059]/40 bg-[#161D2E] px-5 py-3.5 font-semibold text-[#EFE6D2] transition hover:border-[#E5B869]">
+        <button onClick={webShare} className="flex items-center justify-center gap-2 rounded-xl border border-gold-2/40 bg-ink-3 px-5 py-3.5 font-semibold text-fg transition hover:border-gold">
           <Share2 size={18} /> SNS · 메신저로 공유
         </button>
-        <button onClick={download} className="flex items-center justify-center gap-2 rounded-xl border border-[#C5A059]/40 bg-[#161D2E] px-5 py-3.5 font-semibold text-[#EFE6D2] transition hover:border-[#E5B869]">
+        <button onClick={download} className="flex items-center justify-center gap-2 rounded-xl border border-gold-2/40 bg-ink-3 px-5 py-3.5 font-semibold text-fg transition hover:border-gold">
           <Download size={18} /> 이미지로 저장 (1080×1350)
         </button>
-        <button onClick={copy} className="flex items-center justify-center gap-2 rounded-xl border border-[#C5A059]/40 bg-[#161D2E] px-5 py-3.5 font-semibold text-[#EFE6D2] transition hover:border-[#E5B869]">
+        <button onClick={copy} className="flex items-center justify-center gap-2 rounded-xl border border-gold-2/40 bg-ink-3 px-5 py-3.5 font-semibold text-fg transition hover:border-gold">
           {copied ? <Check size={18} className="text-[#2F9E8F]" /> : <Link2 size={18} />} {copied ? "링크가 복사되었습니다" : "결과 링크 복사"}
         </button>
-        <p className="text-[11px] leading-relaxed text-[#EFE6D2]/40">
+        <p className="text-[11px] leading-relaxed text-fg/40">
           공유 링크에는 이용자가 직접 선택한 생년월일·시간 정보만 URL 파라미터로 포함됩니다. 서버에는 어떤 정보도 저장되지 않으며, 링크를 공유할 상대를 신중히 선택해 주세요.
         </p>
       </div>

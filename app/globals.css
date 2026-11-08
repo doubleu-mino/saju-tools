@@ -1,12 +1,68 @@
 @import "tailwindcss";
 
+/* ───────── 음(陰)·다크 기본 토큰 — 딥 네이비 + 고풍 골드 ───────── */
+:root {
+  color-scheme: dark;
+  --ink: #0b0f19;
+  --ink-2: #111827;
+  --ink-3: #161d2e;
+  --fg: #efe6d2;
+  --gold: #e5b869;
+  --gold-2: #c5a059;
+  --gold-3: #8c6d35;
+  --gold-light: #f3dfae;
+  --on-gold: #0b0f19;
+  --wood-text: #5fc9ba;
+  --fire-text: #f08c86;
+  --earth-text: #e0ad66;
+  --metal-text: #d9dee5;
+  --water-text: #9fb0da;
+  --card-from: rgba(22, 29, 46, 0.85);
+  --card-to: rgba(17, 24, 39, 0.85);
+  --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(229, 184, 105, 0.08);
+  --field-bg: rgba(11, 15, 25, 0.75);
+  --background: var(--ink);
+  --foreground: var(--fg);
+}
+
+/* ───────── 양(陽)·라이트 토큰 — 한지 아이보리 + 먹색 + 차분한 오행색 ───────── */
+html.light {
+  color-scheme: light;
+  --ink: #f9f7f1;
+  --ink-2: #ffffff;
+  --ink-3: #f1ecdf;
+  --fg: #1f2937;
+  --gold: #a67c2e;
+  --gold-2: #9a7a3d;
+  --gold-3: #c8ab6a;
+  --gold-light: #7a5a1e;
+  --on-gold: #1f2937;
+  --wood-text: #1f7a6d;
+  --fire-text: #a8332d;
+  --earth-text: #8a5f22;
+  --metal-text: #5b6672;
+  --water-text: #3f4f73;
+  --card-from: rgba(255, 255, 255, 0.92);
+  --card-to: rgba(249, 247, 241, 0.92);
+  --card-shadow: 0 10px 30px rgba(60, 45, 20, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --field-bg: rgba(255, 255, 255, 0.85);
+}
+
 @theme inline {
-  --color-ink: #0b0f19;
-  --color-ink-2: #111827;
-  --color-ink-3: #161d2e;
-  --color-gold: #e5b869;
-  --color-gold-2: #c5a059;
-  --color-gold-3: #8c6d35;
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-fg: var(--fg);
+  --color-gold: var(--gold);
+  --color-gold-2: var(--gold-2);
+  --color-gold-3: var(--gold-3);
+  --color-gold-light: var(--gold-light);
+  --color-on-gold: var(--on-gold);
+  --color-wood-text: var(--wood-text);
+  --color-fire-text: var(--fire-text);
+  --color-earth-text: var(--earth-text);
+  --color-metal-text: var(--metal-text);
+  --color-water-text: var(--water-text);
   --color-paper: #f3e9d2;
   --color-wood: #2f9e8f;
   --color-fire: #c2413b;
@@ -15,12 +71,6 @@
   --color-water: #3f4f73;
   --font-serif: var(--font-serif), "Noto Serif KR", "Nanum Myeongjo", "Apple SD Gothic Neo", serif;
   --font-hanja: var(--font-hanja), "Noto Serif KR", "Songti SC", "Batang", serif;
-}
-
-:root {
-  color-scheme: dark;
-  --background: #0b0f19;
-  --foreground: #efe6d2;
 }
 
 html { scroll-behavior: smooth; }
@@ -33,9 +83,16 @@ body {
     radial-gradient(1200px 600px at 50% -10%, rgba(229, 184, 105, 0.10), transparent 60%),
     radial-gradient(800px 400px at 100% 100%, rgba(63, 79, 115, 0.18), transparent 60%);
   background-attachment: fixed;
+  transition: background-color .35s ease, color .35s ease;
+}
+html.light body {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.48 0 0 0 0 0.35 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(1200px 600px at 50% -10%, rgba(166, 124, 46, 0.10), transparent 60%),
+    radial-gradient(800px 400px at 100% 100%, rgba(200, 171, 106, 0.14), transparent 60%);
 }
 
-/* 별빛 입자 */
+/* 별빛 입자 (음 모드 전용) */
 .starfield::before {
   content: "";
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
@@ -49,8 +106,9 @@ body {
   background-size: 900px 900px;
   opacity: .7;
 }
+html.light .starfield::before { opacity: 0; }
 
-/* 한지 질감 패 */
+/* 한지 질감 패 (양 테마 모두 동일) */
 .hanji {
   background-color: #f1e7cf;
   background-image:
@@ -58,43 +116,61 @@ body {
     linear-gradient(160deg, #f6eed9 0%, #ecdfbf 100%);
   color: #2a2419;
 }
+html.light .hanji { box-shadow: 0 6px 24px rgba(60, 45, 20, 0.12); }
 
 .gold-text {
   background: linear-gradient(135deg, #f6dfa5 0%, #e5b869 45%, #b8893e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+html.light .gold-text {
+  background: linear-gradient(135deg, #8a6420 0%, #a67c2e 45%, #6b4e14 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
 
-.gold-border { border-color: rgba(197, 160, 89, 0.3); }
+.gold-border { border-color: color-mix(in srgb, var(--gold-2) 30%, transparent); }
 
 .card {
-  background: linear-gradient(180deg, rgba(22, 29, 46, .85), rgba(17, 24, 39, .85));
-  border: 1px solid rgba(197, 160, 89, 0.28);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(229, 184, 105, .08);
+  background: linear-gradient(180deg, var(--card-from), var(--card-to));
+  border: 1px solid color-mix(in srgb, var(--gold-2) 28%, transparent);
+  box-shadow: var(--card-shadow);
   backdrop-filter: blur(8px);
 }
 
 .ornament { position: relative; }
 .ornament::before, .ornament::after {
   content: ""; position: absolute; width: 14px; height: 14px;
-  border: 1px solid rgba(229,184,105,.55);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
 }
 .ornament::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
 .ornament::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
 
 .select-dark {
   appearance: none;
-  background-color: rgba(11, 15, 25, .75);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23E5B869' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-color: var(--field-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23C5A059' stroke-width='1.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 12px center;
-  border: 1px solid rgba(197, 160, 89, 0.3); color: #efe6d2;
+  border: 1px solid color-mix(in srgb, var(--gold-2) 30%, transparent); color: var(--fg);
   border-radius: 10px; padding: 10px 36px 10px 12px; font-family: inherit;
 }
-.select-dark:focus, .input-dark:focus { outline: none; border-color: rgba(229,184,105,.8); box-shadow: 0 0 0 3px rgba(229,184,105,.15); }
-.input-dark {
-  background-color: rgba(11, 15, 25, .75); border: 1px solid rgba(197, 160, 89, 0.3);
-  color: #efe6d2; border-radius: 10px; padding: 10px 12px; font-family: inherit;
+.select-dark:focus, .input-dark:focus {
+  outline: none; border-color: color-mix(in srgb, var(--gold) 80%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
-.input-dark::placeholder { color: rgba(239,230,210,.35); }
+.input-dark {
+  background-color: var(--field-bg); border: 1px solid color-mix(in srgb, var(--gold-2) 30%, transparent);
+  color: var(--fg); border-radius: 10px; padding: 10px 12px; font-family: inherit;
+}
+.input-dark::placeholder { color: color-mix(in srgb, var(--fg) 35%, transparent); }
+
+/* 음양 토글 */
+.yinyang-btn { transition: transform .6s cubic-bezier(.4,.1,.2,1), box-shadow .3s ease; }
+.yinyang-btn:hover { box-shadow: 0 0 18px 2px color-mix(in srgb, var(--gold) 35%, transparent); }
+html.light .yinyang-btn svg { transform: rotate(180deg); }
+.yinyang-btn svg { transition: transform .6s cubic-bezier(.4,.1,.2,1); }
+
+/* VIP 잠금 미리보기 */
+.vip-blur { filter: blur(6px); user-select: none; pointer-events: none; }
+.vip-fade { background: linear-gradient(180deg, transparent 0%, var(--card-to) 85%); }
 
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 @keyframes spin-rev { to { transform: rotate(-360deg); } }
@@ -102,17 +178,19 @@ body {
 @keyframes rise { from { opacity: 0; transform: translateY(14px);} to { opacity: 1; transform: none;} }
 @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(229,184,105,.0);} 50% { box-shadow: 0 0 36px 4px rgba(229,184,105,.25);} }
 @keyframes shimmer { 0% { background-position: -200% 0;} 100% { background-position: 200% 0;} }
+@keyframes modal-in { from { opacity: 0; transform: translateY(18px) scale(.97);} to { opacity: 1; transform: none;} }
 
 .animate-spin-slow { animation: spin-slow 6s linear infinite; }
 .animate-spin-rev { animation: spin-rev 10s linear infinite; }
 .animate-needle { animation: needle 1.5s cubic-bezier(.4,.1,.2,1) infinite; transform-origin: 50% 50%; }
 .animate-rise { animation: rise .6s ease-out both; }
 .animate-glow { animation: glow 3s ease-in-out infinite; }
+.animate-modal { animation: modal-in .3s ease-out both; }
 .delay-1 { animation-delay: .1s; } .delay-2 { animation-delay: .2s; } .delay-3 { animation-delay: .3s; } .delay-4 { animation-delay: .4s; }
 
 .prose-saju p { line-height: 1.85; }
-.prose-saju h2 { color: #e5b869; font-size: 1.25rem; margin-top: 2rem; margin-bottom: .75rem; font-weight: 700; }
-.prose-saju h3 { color: #f0d9a6; font-size: 1.05rem; margin-top: 1.5rem; margin-bottom: .5rem; font-weight: 700; }
+.prose-saju h2 { color: var(--gold); font-size: 1.25rem; margin-top: 2rem; margin-bottom: .75rem; font-weight: 700; }
+.prose-saju h3 { color: var(--gold-light); font-size: 1.05rem; margin-top: 1.5rem; margin-bottom: .5rem; font-weight: 700; }
 .prose-saju ul { list-style: disc; padding-left: 1.4rem; line-height: 1.85; }
 .prose-saju li + li { margin-top: .25rem; }
-.prose-saju a { color: #e5b869; text-decoration: underline; text-underline-offset: 3px; }
+.prose-saju a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }

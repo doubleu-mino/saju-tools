@@ -1,4 +1,4 @@
-# saju-tools — 萬歲曆 사주툴스
+# 명리원 (明理院) — 정통 만세력 & 심층 사주 분석
 
 프리미엄 정통 사주 만세력 포털. Next.js(App Router) + Tailwind CSS + Lucide, 100% 클라이언트 계산, Cloudflare Pages 정적 배포(`output: 'export'`).
 

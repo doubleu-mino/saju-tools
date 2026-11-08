@@ -1,5 +1,6 @@
 import {
-  Element, ELEMENTS, SajuResult, ThemeKey, TenGodGroup, TenGod, TEN_GOD_GROUP, generatedBy, ELEMENT_HANJA,
+  Element, ELEMENTS, SajuResult, ThemeKey, ReportThemeKey, TenGodGroup, TenGod, TEN_GOD_GROUP, generatedBy, overcomeBy, ELEMENT_HANJA,
+  STEMS, STEMS_KO, BRANCHES, BRANCHES_KO, STEM_ELEMENT, BRANCH_ELEMENT, BRANCH_MAIN_STEM, tenGodOf,
 } from "./saju";
 
 /* ───────────────────────── 일간 10유형 본성·기질 ───────────────────────── */
@@ -324,8 +325,8 @@ export function currentDaeun(r: SajuResult) {
   return r.daeun.items.find((d) => age >= d.startAge && age <= d.endAge) ?? null;
 }
 
-export function buildThemeReport(r: SajuResult): ThemeReport {
-  const theme: ThemeKey = r.input.theme;
+export function buildThemeReport(r: SajuResult, themeKey?: ThemeKey): ThemeReport {
+  const theme: ThemeKey = themeKey ?? r.input.theme;
   const remedyEl = remedyElementFor(r);
   const remedy = REMEDIES[remedyEl];
   const remedyReason = r.missing.includes(remedyEl)
@@ -361,15 +362,145 @@ export function buildThemeReport(r: SajuResult): ThemeReport {
         sections: loveReport(r), remedy, remedyReason, score,
       };
     }
+    case "health": {
+      const maxCount = Math.max(...r.elements.map((e) => e.count));
+      const score = Math.max(1, Math.min(5, 3 + balance + (r.strength.label === "중화" ? 1 : 0) - (maxCount >= 4 ? 1 : 0) - (r.missing.length >= 2 ? 1 : 0)));
+      return {
+        title: "건강·체질운 심층 리포트",
+        summary: r.missing.length
+          ? `${r.missing.map((e) => `${e}(${ELEMENT_HANJA[e]})`).join("·")} 기운이 비어 있는 체질 — 비어 있는 장부(臟腑)를 먼저 돌보는 것이 건강의 핵심입니다.`
+          : maxCount >= 4
+            ? `${r.strongest}(${ELEMENT_HANJA[r.strongest]}) 기운이 치우친 체질 — 과한 기운을 덜어내는 생활 습관이 보약입니다.`
+            : "오행이 고르게 자리한 균형 체질 — 규칙적인 리듬만 지켜도 타고난 건강을 오래 누립니다.",
+        sections: healthReport(r), remedy, remedyReason, score,
+      };
+    }
     default: {
       const score = Math.max(1, Math.min(5, 3 + balance + (r.strength.label === "중화" ? 1 : 0)));
       return {
-        title: "인생총운·대운 심층 리포트",
+        title: "인생 종합 총운 · 대운 리포트",
         summary: `${r.strength.label}의 ${r.dayMaster.title} — ${remedyEl}(${ELEMENT_HANJA[remedyEl]})의 기운을 따라 흐를 때 인생의 물길이 열립니다.`,
         sections: lifeReport(r), remedy, remedyReason, score,
       };
     }
   }
+}
+
+
+/* ───────────────────────── 건강·체질 리포트 ───────────────────────── */
+
+const ORGAN_TEXT: Record<Element, { organ: string; excess: string; lack: string; care: string }> = {
+  목: { organ: "간(肝)·담(膽)·근육·눈", excess: "스트레스가 간으로 몰려 두통·눈 피로·근육 긴장이 잦고, 화를 참다가 한 번에 터지기 쉽습니다.", lack: "간담의 기운이 약해 쉽게 피로하고 결단이 늦으며, 눈과 근육·인대 쪽이 취약할 수 있습니다.", care: "새벽 공기 속 가벼운 산책과 녹색 채소, 신맛 나는 음식이 간기(肝氣)를 다스립니다." },
+  화: { organ: "심장(心)·소장·혈관·혀", excess: "열이 위로 떠 불면·두근거림·구내염·안면 홍조가 생기기 쉽고, 감정의 기복이 몸으로 바로 드러납니다.", lack: "심화(心火)가 약해 손발이 차고 순환이 더디며, 의욕과 활력이 쉽게 떨어질 수 있습니다.", care: "밤 11시 이전 취침과 쓴맛 채소(쑥·도라지), 햇볕 쬐기가 심장의 리듬을 고릅니다." },
+  토: { organ: "비(脾)·위(胃)·소화기·살", excess: "생각과 걱정이 많아 위장이 굳고 더부룩함·체중 증가·무기력이 따라오기 쉽습니다.", lack: "비위가 약해 소화 흡수가 더디고 입맛이 들쭉날쭉하며, 잔병치레로 체력이 새기 쉽습니다.", care: "제때 먹는 규칙적인 식사와 따뜻한 곡류·단호박·대추처럼 단맛 나는 음식이 비위를 세웁니다." },
+  금: { organ: "폐(肺)·대장·피부·코", excess: "건조한 기운이 강해 피부·호흡기가 민감하고, 지나친 완벽주의가 긴장성 변비·어깨 결림으로 나타납니다.", lack: "폐 기운이 약해 감기·비염·피부 트러블에 취약하고, 체력 회복이 느린 편입니다.", care: "심호흡·유산소 운동과 배·무·마늘 같은 흰색 음식, 적정 습도 유지가 폐를 돕습니다." },
+  수: { organ: "신장(腎)·방광·뼈·귀", excess: "한기(寒氣)가 많아 몸이 차고 붓기 쉬우며, 두려움·불안이 깊어지면 허리와 무릎이 먼저 신호를 보냅니다.", lack: "신장의 정(精)이 약해 쉽게 지치고 허리·무릎·치아·청력이 일찍 약해질 수 있으며, 노화 관리가 핵심입니다.", care: "충분한 수면과 검은콩·검은깨·해조류 같은 검은색 음식, 하체 근력 운동이 신장을 채웁니다." },
+};
+
+function healthReport(r: SajuResult): ThemeSection[] {
+  const s: ThemeSection[] = [];
+  const strong = ORGAN_TEXT[r.strongest];
+  const weakEl = r.missing[0] ?? r.weakest;
+  const weak = ORGAN_TEXT[weakEl];
+  const maxCount = Math.max(...r.elements.map((e) => e.count));
+  s.push({
+    heading: `타고난 체질 — ${r.dayMaster.title}의 몸`,
+    body: `일간 ${r.dayMaster.title}(${r.dayMaster.hanja})은 ${ELEMENT_HANJA[r.dayMaster.element]} 기운의 몸을 타고났으며, 명리학에서 ${r.dayMaster.element} 기운은 ${ORGAN_TEXT[r.dayMaster.element].organ} 계통을 주관합니다. ${r.strength.label === "신강" ? "일간이 강해 기본 체력과 회복력이 좋은 편이지만, 그만큼 무리하기 쉬워 과로가 가장 큰 적입니다." : r.strength.label === "신약" ? "일간이 약해 에너지 총량이 크지 않은 체질이니, 체력을 나눠 쓰는 지혜와 충분한 휴식이 건강의 기본입니다." : "일간이 중화를 이루어 체질의 치우침이 적고, 생활 리듬만 지키면 큰 탈 없이 건강을 유지하는 구조입니다."}`,
+  });
+  s.push({
+    heading: `과한 기운의 경고 — ${r.strongest}(${ELEMENT_HANJA[r.strongest]}) ${maxCount}개`,
+    body: `원국에서 가장 강한 ${r.strongest} 기운은 ${strong.organ} 계통과 연결됩니다. ${maxCount >= 4 ? `${maxCount}개로 매우 치우쳐 있어 ` : ""}${strong.excess} 강한 기운은 눌러서 없애기보다 ${ELEMENT_HANJA[r.strongest]}이 생(生)하는 다음 기운으로 흘려보내는 것이 순리이며, ${overcomeBy(r.strongest)}(${ELEMENT_HANJA[overcomeBy(r.strongest)]}) 기운의 음식과 활동이 균형을 잡아 줍니다.`,
+  });
+  s.push({
+    heading: `비어 있는 장부 — ${weakEl}(${ELEMENT_HANJA[weakEl]}) 보강`,
+    body: `${r.missing.length ? `원국에 ${weakEl} 기운이 아예 없어` : `원국에서 ${weakEl} 기운이 가장 약해`} ${weak.organ} 계통이 평생의 관리 포인트입니다. ${weak.lack} ${weak.care}`,
+  });
+  return s;
+}
+
+/* ───────────────────────── 맛보기 3줄 & VIP 미리보기 ───────────────────────── */
+
+const firstSentence = (t: string) => {
+  const m = t.match(/^.*?[.!?](?=\s|$)/);
+  return (m ? m[0] : t).trim();
+};
+
+/** 테마 탭 클릭 시 무료로 보여주는 핵심 3줄 */
+export function buildTeaser(r: SajuResult, theme: ReportThemeKey): string[] {
+  return buildThemeReport(r, theme).sections.slice(0, 3).map((s) => firstSentence(s.body));
+}
+
+/** 세운(歲運) 연도의 간지·십성 정보 */
+function yearFortune(r: SajuResult, year: number) {
+  const stem = (year - 4) % 10;
+  const branch = (year - 4) % 12;
+  return {
+    year,
+    ganzhi: `${STEMS[stem]}${BRANCHES[branch]}`,
+    ko: `${STEMS_KO[stem]}${BRANCHES_KO[branch]}`,
+    stemGod: tenGodOf(r.dayMaster.stem, stem),
+    branchGod: tenGodOf(r.dayMaster.stem, BRANCH_MAIN_STEM[branch]),
+    stemElement: STEM_ELEMENT[stem],
+    branchElement: BRANCH_ELEMENT[branch],
+  };
+}
+
+const vipFocus = (r: SajuResult): Record<ReportThemeKey, Record<TenGodGroup, string>> => ({
+  wealth: {
+    비겁: "경쟁자와 지출이 함께 늘어나는 해이므로 동업·보증·큰 지출은 상반기에 결정하지 말고, 수입의 20%를 먼저 떼어 두는 선저축 구조가 재물을 지킵니다.",
+    식상: "아이디어와 재능이 수익으로 바뀌는 생재(生財)의 흐름이 열리니, 부업·콘텐츠·기술 판매 등 '나에게서 나오는 것'을 상품화하기에 가장 좋은 시기입니다.",
+    재성: "재물의 별이 직접 들어오는 해로 수입 증가·투자 기회·계약 운이 두드러지며, 하반기 금(金)·수(水) 월에 결실이 집중됩니다.",
+    관성: "재물보다 명예와 책임이 커지는 해입니다. 무리한 투자보다 직위·연봉·공적 신용을 쌓는 쪽이 장기적으로 더 큰 부를 만듭니다.",
+    인성: "문서·계약·부동산·자격 운이 좋아지는 해로, 돈을 버는 것보다 돈이 들어올 '통로'를 만드는 투자(학습·자격·권리 확보)가 유리합니다.",
+  },
+  career: {
+    비겁: "조직 안에서 경쟁과 독립 욕구가 동시에 커지는 해입니다. 섣부른 퇴사보다 사내 영향력을 넓히고 인맥을 확보해 두면 다음 해 큰 기회의 발판이 됩니다.",
+    식상: "자기 방식과 표현이 강해지는 해로 창업·독립·이직의 결단이 서기 쉽습니다. 상사와의 마찰을 조심하되, 새 프로젝트 제안에는 적극적으로 나서세요.",
+    재성: "성과가 보상으로 돌아오는 해입니다. 영업·사업·실적 중심의 역할에서 빛을 발하며, 연봉 협상과 조건 좋은 스카우트 제안이 찾아올 수 있습니다.",
+    관성: "승진·발탁·시험·공직 운이 직접 들어오는 해입니다. 책임이 무거워지는 만큼 건강 관리와 평판 관리가 함께 가야 하며, 하반기에 직급 변화가 유력합니다.",
+    인성: "배움·자격·멘토의 해로, 업무 역량을 재정비하거나 자격증·학위를 취득하기에 최적입니다. 윗사람의 추천으로 길이 열리는 귀인운이 작용합니다.",
+  },
+  love: {
+    비겁: "친구·동료·모임을 통해 인연이 오지만 경쟁자도 함께 나타나는 해입니다. 기존 연인과는 소유욕과 자존심 다툼을 조심하고, 관계의 주도권보다 신뢰를 택하세요.",
+    식상: "매력과 표현력이 피어나는 해로 새로운 만남이 많고 이성에게 호감을 쉽게 얻습니다. 다만 말로 인한 오해와 잔소리가 관계를 흔들 수 있으니 경청이 핵심입니다.",
+    재성: r.input.gender === "male" ? "남성에게 재성은 곧 연인·배우자의 별입니다. 결혼운·연애운이 직접 들어오는 해로, 봄~초여름에 인연이 구체화되기 쉽습니다." : "현실적 조건과 경제적 안정이 사랑의 화두가 되는 해입니다. 결혼 준비·동거·재정 통합 등 관계가 현실의 단계로 넘어갑니다.",
+    관성: r.input.gender === "female" ? "여성에게 관성은 곧 연인·배우자의 별입니다. 결혼운·연애운이 직접 들어오는 해로, 책임감 있고 사회적으로 안정된 상대와의 인연이 유력합니다." : "책임과 의무가 커지는 해로, 연애보다 일에 몰두하다 관계가 소홀해지기 쉽습니다. 정기적인 약속과 기념일 챙기기가 관계를 지켜 줍니다.",
+    인성: "정서적 안정과 돌봄이 중심이 되는 해입니다. 어른·가족의 소개나 학업·모임에서 차분한 인연이 이어지며, 기존 관계는 깊어지지만 권태를 경계해야 합니다.",
+  },
+  health: {
+    비겁: "체력과 승부욕이 함께 솟는 해로 과격한 운동·무리한 일정으로 인한 부상과 과로를 조심해야 합니다. 근육·관절 관리와 충분한 수면이 핵심입니다.",
+    식상: "활동량이 늘고 표현 욕구가 커지는 해입니다. 식상은 소화기·생식기·호흡기와 연결되니 폭식·과음·수면 부족이 쌓이지 않도록 리듬을 지키세요.",
+    재성: "바쁘게 움직이며 성과를 내는 해이지만 재성은 일간의 기운을 소모시킵니다. 특히 신약한 명식은 과로·위장 장애·번아웃을 경계하고 정기 검진을 꼭 챙기세요.",
+    관성: "책임과 스트레스가 몸을 누르는 해로, 관성은 혈압·심장·두통·불면과 연결됩니다. 명상·호흡법·규칙적인 유산소 운동으로 긴장을 매일 풀어 주어야 합니다.",
+    인성: "휴식과 회복, 치유의 기운이 들어오는 해입니다. 미뤄 둔 치료·검진·체질 개선을 시작하기에 가장 좋고, 생각이 많아져 수면의 질이 떨어지지 않도록 주의하세요.",
+  },
+});
+
+const GROUP_OF = (g: TenGod | "일간"): TenGodGroup => (g === "일간" ? "비겁" : TEN_GOD_GROUP[g]);
+
+/** VIP 심층 리포트 본문 미리보기 (블러 처리되어 노출) — 2026·2027 세운 기반 */
+export function buildVipPreview(r: SajuResult, theme: ReportThemeKey): string[] {
+  const label = { wealth: "재물", career: "직장·사업", love: "연애·결혼", health: "건강" }[theme];
+  const y26 = yearFortune(r, 2026);
+  const y27 = yearFortune(r, 2027);
+  const cur = currentDaeun(r);
+  const remedyEl = remedyElementFor(r);
+  const VIP_FOCUS = vipFocus(r);
+  const paras: string[] = [];
+  paras.push(
+    `2026년 ${y26.ko}(${y26.ganzhi})년은 일간 ${r.dayMaster.title} 기준으로 천간에 ${y26.stemGod}, 지지에 ${y26.branchGod}의 기운이 들어오는 해입니다. ` +
+    `${VIP_FOCUS[theme][GROUP_OF(y26.stemGod)]} ` +
+    `${y26.stemElement === remedyEl || y26.branchElement === remedyEl ? `특히 올해는 당신에게 필요한 ${remedyEl}(${ELEMENT_HANJA[remedyEl]}) 기운이 세운으로 들어와 ${label} 분야에서 막혔던 흐름이 풀리는 시기입니다.` : `올해 세운의 ${y26.stemElement}·${y26.branchElement} 기운은 원국의 ${r.strongest} 기운과 어우러져 ${label} 운의 변화 폭을 키웁니다.`}`,
+  );
+  paras.push(
+    `2027년 ${y27.ko}(${y27.ganzhi})년에는 천간 ${y27.stemGod}·지지 ${y27.branchGod}의 흐름으로 바뀝니다. ` +
+    `${VIP_FOCUS[theme][GROUP_OF(y27.stemGod)]} ` +
+    `${cur ? `현재 ${cur.startAge}~${cur.endAge}세 ${cur.ganzhi} 대운(${cur.stemGod}·${cur.branchGod})의 큰 물길 위에서 두 해의 세운이 겹쳐 작용하므로, 대운과 세운이 서로 생(生)하는 월(月)을 골라 중요한 결정을 내리는 것이 핵심 비책입니다.` : "대운의 흐름과 세운이 맞물리는 월(月)을 골라 중요한 결정을 내리는 것이 핵심 비책입니다."}`,
+  );
+  paras.push(
+    `${label} 운을 극대화하는 월별 길흉표와 피해야 할 시기, 함께하면 좋은 띠·일간 궁합, 그리고 ${remedyEl}(${ELEMENT_HANJA[remedyEl]}) 기운을 생활에 심는 12개월 실천 처방은 VIP 심층 비책 전문에서 상세히 이어집니다.`,
+  );
+  return paras;
 }
 
 export const ELEMENT_ORDER = ELEMENTS;

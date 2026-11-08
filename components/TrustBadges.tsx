@@ -12,10 +12,10 @@ export default function TrustBadges({ compact = false }: { compact?: boolean }) 
       {BADGES.map(({ icon: Icon, text }) => (
         <li
           key={text}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#C5A059]/30 bg-[#161D2E]/70 px-3 py-1.5 text-[#E5B869]"
+          className="inline-flex items-center gap-1.5 rounded-full border border-gold-2/30 bg-ink-3/70 px-3 py-1.5 text-gold"
         >
           <Icon size={compact ? 12 : 14} className="shrink-0" />
-          <span className="text-[#EFE6D2]/85">{text}</span>
+          <span className="text-fg/85">{text}</span>
         </li>
       ))}
     </ul>

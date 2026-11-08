@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import StaticPage from "@/components/StaticPage";
 
-export const metadata: Metadata = { title: "이용약관", description: "사주툴스 萬歲曆 서비스 이용약관" };
+export const metadata: Metadata = { title: "이용약관", description: "명리원(明理院) 서비스 이용약관" };
 
 export default function TermsPage() {
   return (
     <StaticPage eyebrow="TERMS" title="이용약관" updated="2026년 11월 8일">
       <h2>제1조 (목적)</h2>
-      <p>본 약관은 사주툴스 萬歲曆(이하 &ldquo;서비스&rdquo;)이 제공하는 사주 만세력 및 해석 콘텐츠의 이용 조건과 절차, 이용자와 서비스의 권리·의무를 규정함을 목적으로 합니다.</p>
+      <p>본 약관은 명리원(明理院)(이하 &ldquo;서비스&rdquo;)이 제공하는 사주 만세력 및 해석 콘텐츠의 이용 조건과 절차, 이용자와 서비스의 권리·의무를 규정함을 목적으로 합니다.</p>
 
       <h2>제2조 (서비스의 내용)</h2>
       <ul>

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import StaticPage from "@/components/StaticPage";
 
-export const metadata: Metadata = { title: "개인정보처리방침", description: "사주툴스 萬歲曆은 입력 데이터를 서버로 전송하거나 저장하지 않습니다." };
+export const metadata: Metadata = { title: "개인정보처리방침", description: "명리원(明理院)은 입력 데이터를 서버로 전송하거나 저장하지 않습니다." };
 
 export default function PrivacyPage() {
   return (
     <StaticPage eyebrow="PRIVACY" title="개인정보처리방침" updated="2026년 11월 8일">
       <p>
-        사주툴스 萬歲曆(이하 &ldquo;서비스&rdquo;)은 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 등 관련 법령을 준수합니다.
+        명리원(明理院)(이하 &ldquo;서비스&rdquo;)은 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 등 관련 법령을 준수합니다.
         본 방침은 서비스가 어떤 정보를 어떻게 처리하는지 투명하게 알리기 위해 작성되었습니다.
       </p>
 
