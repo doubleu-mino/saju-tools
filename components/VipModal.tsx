@@ -16,14 +16,31 @@ interface Props {
 
 /** 해금 시 열리는 7가지 VIP 비책 */
 const VIP_ITEMS = [
-  "인생 역전 황금의 달 · 절대 조심 손재수의 달 (2026·2027)",
-  "고민별 결정적 월(月) — 연락·서명·집행·결말의 정확한 달",
+  "🔒 24개월 타임라인 중 황금의 달 & 절대 조심 손재수의 달 즉시 확인",
+  "고민별 결정적 월(月) — 연락·서명·집행·갈무리의 운기 최정점 시기",
   "재벌가 비전 간명식 — 평생 부를 결정짓는 귀인 성씨 초성 2종",
   "천을귀인 띠 · 피해야 할 성씨 · 동업자/담당자 인연 판별",
   "삼재·관살·손재수를 무력화하는 보완 오행 · 비책 물상(物象)",
   "격국(格局)·용신·희신·기신 전문 간명 + 길방위·색상 처방",
   "12개월 월운 타임라인 전체 해금 + 월별 실천 처방 캘린더",
 ];
+
+/* ───────── 2티어 가격 옵션 ───────── */
+type PlanKey = "single" | "full";
+interface Plan { key: PlanKey; title: string; price: number; original?: number; badge?: string; desc: string; cta: string }
+const PLANS: Plan[] = [
+  {
+    key: "single", title: "선택 고민 핀포인트 단품 해금권", price: 8900,
+    desc: "선택한 1개 테마의 잠긴 인라인 키워드 및 결정적 월 즉시 확인",
+    cta: "8,900원 단품 혜택 신청하기",
+  },
+  {
+    key: "full", title: "👑 2026-2027 VIP 종합 비책 풀패키지", price: 14900, original: 29900, badge: "BEST",
+    desc: "전체 4대 테마 키워드 + 24개월 타임라인 황금의 달/손재수의 달 + 귀인 성씨 초성 등 7대 비책 완전 해금",
+    cta: "14,900원 얼리버드 혜택 신청하기",
+  },
+];
+const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
 const WAITLIST_KEY = "myeongri-vip-waitlist";
 /** 폼 수집 서비스(Formspree, Google Apps Script 등) 엔드포인트. 미설정 시 브라우저에만 저장됩니다. */
@@ -38,6 +55,8 @@ export default function VipModal({ open, onClose, themeLabel, lockHint, lockCoun
 function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, "open">) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [planKey, setPlanKey] = useState<PlanKey>("full");
+  const plan = PLANS.find((p) => p.key === planKey) ?? PLANS[1];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -57,7 +76,7 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
         await fetch(WAITLIST_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: v, theme: themeLabel, lock: lockHint ?? null, source: "myeongri-vip-waitlist", at: new Date().toISOString() }),
+          body: JSON.stringify({ email: v, theme: themeLabel, lock: lockHint ?? null, plan: plan.key, price: plan.price, source: "myeongri-vip-waitlist", at: new Date().toISOString() }),
         });
       }
       const list: string[] = JSON.parse(localStorage.getItem(WAITLIST_KEY) ?? "[]");
@@ -89,6 +108,7 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
         <h3 id="vip-modal-title" className="gold-text mt-1 text-center text-xl font-black leading-tight sm:text-2xl">
           상위 1% 재벌가<br />VIP 간명 비책 해금
         </h3>
+        <p className="mt-2 text-center text-[13px] font-semibold text-fg/80">단 한 번의 간명으로 2026-2027 내 운명의 비밀 7가지 완전 해금</p>
         <p className="mt-3 text-center text-sm leading-relaxed text-fg/70">
           {lockHint ? (
             <>방금 누르신 <span className="inline-lock !cursor-default"><Lock size={11} /> {lockHint}</span> 자리는 <b className="text-gold-light">{themeLabel}</b> 간명의 결정적 열쇠입니다.</>
@@ -100,22 +120,58 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
 
         <ul className="mt-4 space-y-1.5 rounded-xl border border-gold-2/25 bg-ink/50 p-3.5 text-[13px] leading-snug text-fg/80">
           {VIP_ITEMS.map((t, i) => (
-            <li key={t} className="flex gap-2">
+            <li key={t} className={`flex gap-2 ${i === 0 ? "-mx-1.5 -mt-1 rounded-lg border border-gold/50 bg-gold/15 px-1.5 py-1.5 font-bold text-gold-light" : ""}`}>
               <Unlock size={13} className="mt-0.5 shrink-0 text-gold" />
               <span><span className="mr-1 text-gold-2">{String(i + 1).padStart(2, "0")}</span>{t}</span>
             </li>
           ))}
         </ul>
 
-        <div className="mt-4 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-center text-sm">
-          <span className="inline-flex items-center gap-1.5 font-bold text-gold-light"><Sparkles size={14} /> 사전 예약 시 얼리버드 50% 할인</span>
-          <p className="mt-1 text-xs text-fg/60">VIP 해금 오픈 즉시 할인 코드와 함께 내 간명 결과 링크를 이메일로 보내드립니다.</p>
+        {/* 2티어 결제 옵션 */}
+        <div role="radiogroup" aria-label="해금 옵션 선택" className="mt-4 space-y-2">
+          {PLANS.map((pl, i) => {
+            const active = pl.key === planKey;
+            return (
+              <button
+                key={pl.key}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                disabled={status === "done"}
+                onClick={() => setPlanKey(pl.key)}
+                className={`relative w-full rounded-xl border p-3.5 text-left transition ${
+                  active ? "border-gold bg-gold/15 shadow-[inset_0_0_14px_rgba(229,184,105,.18)]" : "border-gold-2/25 bg-ink/50 hover:border-gold-2/60"
+                }`}
+              >
+                {pl.badge && (
+                  <span className="absolute -top-2.5 right-3 rounded-full bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-on-gold shadow">{pl.badge}</span>
+                )}
+                <div className="flex items-start gap-2.5">
+                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-gold bg-gold" : "border-fg/35"}`}>
+                    {active && <Check size={11} className="text-on-gold" strokeWidth={3} />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                      <span className={`text-sm font-bold ${active ? "text-gold-light" : "text-fg/85"}`}><span className="mr-1 text-[11px] text-gold-2">옵션 {i + 1}</span>{pl.title}</span>
+                      <span className="flex items-baseline gap-1.5">
+                        {pl.original && <span className="text-[11px] text-fg/45 line-through">정가 {won(pl.original)}</span>}
+                        <span className={`text-lg font-black ${active ? "text-gold-light" : "text-fg/85"}`}>{won(pl.price)}</span>
+                        {pl.original && <span className="rounded-full bg-[#C2413B] px-1.5 py-0.5 text-[10px] font-bold text-white">{Math.round((1 - pl.price / pl.original) * 100)}% 할인</span>}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-[12px] leading-snug text-fg/60">{pl.desc}</span>
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+          <p className="inline-flex items-center gap-1 px-1 text-[11px] text-fg/55"><Sparkles size={11} className="text-gold" /> 사전 예약자에 한해 오픈 시 선택한 옵션의 특가 코드를 이메일로 보내드립니다.</p>
         </div>
 
         {status === "done" ? (
           <div className="mt-5 rounded-xl border border-wood/40 bg-wood/10 p-4 text-center">
             <p className="inline-flex items-center gap-1.5 font-bold text-wood-text"><Check size={16} /> VIP 사전 예약이 완료되었습니다</p>
-            <p className="mt-1 text-xs text-fg/60">해금 오픈 시 얼리버드 50% 코드를 가장 먼저 보내드립니다.</p>
+            <p className="mt-1 text-xs text-fg/60">해금 오픈 시 <b className="text-gold-light">{plan.title.replace("👑 ", "")} {won(plan.price)}</b> 특가 코드를 가장 먼저 보내드립니다.</p>
             <button type="button" onClick={onClose} className="mt-4 w-full rounded-xl border border-gold-2/40 px-4 py-2.5 text-sm text-gold transition hover:bg-gold/10">닫기</button>
           </div>
         ) : (
@@ -139,7 +195,7 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
               disabled={status === "sending"}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-5 py-3 text-sm font-bold text-on-gold transition hover:brightness-110 disabled:opacity-60"
             >
-              <BellRing size={16} /> {status === "sending" ? "신청 중…" : "얼리버드 50% 해금 사전 예약"}
+              <BellRing size={16} /> {status === "sending" ? "신청 중…" : plan.cta}
             </button>
             <button type="button" onClick={onClose} className="w-full rounded-xl px-4 py-2 text-xs text-fg/50 transition hover:text-fg">
               괜찮아요, 다음에 볼게요

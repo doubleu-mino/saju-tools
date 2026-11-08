@@ -347,7 +347,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
       </Section>
 
       {/* PART 6 — 12개월 운세 캘린더 타임라인 */}
-      <Section no="06" title="2026–2027 12개월 운세 캘린더 타임라인" sub="10개 월의 기운은 공개하고, 인생 역전 '황금의 달' 1곳과 절대 조심 '손재수의 달' 1곳은 VIP 황금 자물쇠로 잠겨 있습니다.">
+      <Section no="06" title="2026–2027 12개월 운세 캘린더 타임라인" sub="10개 월의 기운은 공개하고, 운기 최정점 '황금의 달' 1곳과 각별 주의 '손재수의 달' 1곳은 VIP 황금 자물쇠로 잠겨 있습니다.">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div role="tablist" aria-label="연도 선택" className="inline-flex rounded-xl border border-gold-2/30 bg-ink/60 p-1">
             {pin.timelines.map((t) => (
@@ -379,7 +379,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
         <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
           <p className="leading-relaxed text-fg/80">
             <Crown size={14} className="mr-1 inline text-gold" />
-            잠긴 두 달 중 하나는 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">인생 역전 황금의 달</b>, 다른 하나는 <b className="text-fire-text">절대 조심 손재수의 달</b>입니다. 둘을 바꿔 움직이면 1년이 뒤집힙니다.
+            잠긴 두 달 중 하나는 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">운기 최정점 황금의 달</b>, 다른 하나는 <b className="text-fire-text">각별 주의 손재수의 달</b>입니다. 기운이 화합하는 시기를 아는 것이 한 해 발복 확률을 극대화하는 핵심입니다.
           </p>
           <button type="button" onClick={() => openVip("VIP 열람")} className="mt-3 inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-4 py-2.5 text-sm font-bold text-on-gold transition hover:brightness-110 sm:mt-0">
             <Lock size={14} /> 두 달 즉시 해금 <ChevronRight size={14} />
@@ -388,7 +388,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
       </Section>
 
       {/* PART 7 */}
-      <Section no="07" title="카카오톡 · SNS 공유 카드" sub="나의 사주 8글자 패를 이미지로 저장하거나 친구에게 공유해 보세요.">
+      <Section no="07" title="인스타 스토리 · 카카오톡 공유 카드" sub="나의 본원과 수호 동물, 사주 8글자 패를 9:16 스토리 규격 카드로 저장하거나 친구에게 공유해 보세요.">
         <ShareCard result={r} />
       </Section>
 
@@ -411,8 +411,8 @@ export default function SajuResult({ result: r, onReset }: Props) {
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black/15"><Lock size={16} /></span>
               <span className="flex-1 leading-tight">
-                내 사주의 막힌 운을 뚫는 <u className="decoration-2 underline-offset-2">7가지 VIP 비책</u> &amp; 대박의 달 즉시 해금
-                <span className="mt-0.5 block text-[11px] font-semibold opacity-80">잠긴 항목 {pin.lockCount}곳 · 사전 예약 얼리버드 50% 할인</span>
+                내 사주의 막힌 운을 뚫는 <u className="decoration-2 underline-offset-2">7가지 VIP 비책</u> &amp; 황금의 달 즉시 해금
+                <span className="mt-0.5 block text-[11px] font-semibold opacity-80">잠긴 항목 {pin.lockCount}곳 · 런칭 특가 14,900원 (정가 29,900원)</span>
               </span>
               <ChevronRight size={18} className="shrink-0" />
             </button>
@@ -441,7 +441,7 @@ function MonthTile({ m, t, onUnlock }: { m: MonthCard; t: YearTimeline; onUnlock
           <Lock size={20} />
         </span>
         <span className="mt-2 text-xs font-bold text-gold-light">🔒 VIP 열람</span>
-        <span className="mt-0.5 text-[10px] leading-tight text-fg/55">대박의 달 or 손재수의 달</span>
+        <span className="mt-0.5 text-[10px] leading-tight text-fg/55">황금의 달 or 손재수의 달</span>
       </button>
     );
   }
