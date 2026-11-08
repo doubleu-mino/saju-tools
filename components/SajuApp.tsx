@@ -5,7 +5,8 @@ import SajuForm from "./SajuForm";
 import LoadingCompass from "./LoadingCompass";
 import SajuResult from "./SajuResult";
 import TrustBadges from "./TrustBadges";
-import { SajuInput, SajuResult as SajuResultType, calculateSaju, decodeInput, encodeInput } from "@/lib/saju";
+import QuickCards from "./QuickCards";
+import { SajuInput, SajuResult as SajuResultType, ConcernKey, calculateSaju, decodeInput, encodeInput } from "@/lib/saju";
 
 type Stage = "form" | "loading" | "result";
 
@@ -14,7 +15,9 @@ export default function SajuApp() {
   const [input, setInput] = useState<SajuInput | null>(null);
   const [result, setResult] = useState<SajuResultType | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [presetConcern, setPresetConcern] = useState<ConcernKey | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const run = useCallback((i: SajuInput, pushUrl = true) => {
     setInput(i);
@@ -34,7 +37,7 @@ export default function SajuApp() {
     }, 1500);
   }, []);
 
-  // 공유 링크로 진입한 경우 자동 분석
+  // 공유 링크·결제 복귀 링크로 진입한 경우 자동 분석
   useEffect(() => {
     const decoded = decodeInput(window.location.search);
     if (!decoded) return;
@@ -49,12 +52,21 @@ export default function SajuApp() {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /** 퀵 카드 선택 → 폼의 고민 칩 즉시 선택 + 폼으로 부드럽게 스크롤 */
+  const pickConcern = (c: ConcernKey) => {
+    setPresetConcern(c);
+    window.requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+
   return (
     <div ref={topRef} className="scroll-mt-20">
       {stage === "form" && (
         <>
-          {error && <p className="mb-4 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-fire-text">{error}</p>}
-          <SajuForm initial={input} onSubmit={run} />
+          <QuickCards active={presetConcern ?? input?.concern ?? null} onPick={pickConcern} />
+          <div ref={formRef} className="scroll-mt-24">
+            {error && <p className="mb-4 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-sm text-fire-text">{error}</p>}
+            <SajuForm initial={input} presetConcern={presetConcern} onSubmit={run} />
+          </div>
         </>
       )}
       {stage === "loading" && <LoadingCompass />}

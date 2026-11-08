@@ -1,63 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Lock, BellRing, Check, Sparkles, Crown, Unlock } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Lock, Check, Sparkles, Crown, Unlock, CreditCard, ShieldCheck, Loader2 } from "lucide-react";
+import type { PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
+import type { ConcernKey } from "@/lib/saju";
+import { PLANS, PlanKey, UnlockState, planOf, won, savePendingOrder } from "@/lib/unlock";
+import { SITE_NAME } from "@/lib/site";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   /** 선택한 고민 라벨 (예: 재회·인연) */
   themeLabel: string;
+  /** 선택한 고민 키 — 단품 해금권 적용 범위 */
+  concern: ConcernKey;
+  /** 결제 후 결과 화면 복귀용 쿼리 (encodeInput) */
+  returnQuery: string;
   /** 사용자가 클릭한 자물쇠 힌트 (예: ??월) — 모달 헤드라인에 반영 */
   lockHint?: string | null;
   /** 리포트 내 잠긴 항목 수 */
   lockCount?: number;
+  /** 이미 보유한 해금 상태 */
+  owned?: UnlockState | null;
 }
 
 /** 해금 시 열리는 7가지 VIP 비책 */
 const VIP_ITEMS = [
   "🔒 24개월 타임라인 중 황금의 달 & 절대 조심 손재수의 달 즉시 확인",
   "고민별 결정적 월(月) — 연락·서명·집행·갈무리의 운기 최정점 시기",
-  "재벌가 비전 간명식 — 평생 부를 결정짓는 귀인 성씨 초성 2종",
+  "비전 간명식 — 용신·희신 소리오행으로 산출한 귀인 성씨 초성 2종",
   "천을귀인 띠 · 피해야 할 성씨 · 동업자/담당자 인연 판별",
   "삼재·관살·손재수를 무력화하는 보완 오행 · 비책 물상(物象)",
   "격국(格局)·용신·희신·기신 전문 간명 + 길방위·색상 처방",
   "12개월 월운 타임라인 전체 해금 + 월별 실천 처방 캘린더",
 ];
 
-/* ───────── 2티어 가격 옵션 ───────── */
-type PlanKey = "single" | "full";
-interface Plan { key: PlanKey; title: string; price: number; original?: number; badge?: string; desc: string; cta: string }
-const PLANS: Plan[] = [
-  {
-    key: "single", title: "선택 고민 핀포인트 단품 해금권", price: 8900,
-    desc: "선택한 1개 테마의 잠긴 인라인 키워드 및 결정적 월 즉시 확인",
-    cta: "8,900원 단품 혜택 신청하기",
-  },
-  {
-    key: "full", title: "👑 2026-2027 VIP 종합 비책 풀패키지", price: 14900, original: 29900, badge: "BEST",
-    desc: "전체 4대 테마 키워드 + 24개월 타임라인 황금의 달/손재수의 달 + 귀인 성씨 초성 등 7대 비책 완전 해금",
-    cta: "14,900원 얼리버드 혜택 신청하기",
-  },
-];
-const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
+/** 토스페이먼츠 결제위젯 테스트 클라이언트 키 (공식 문서 공개 키). 운영 전환 시 환경변수로 교체. */
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+const IS_TEST_KEY = TOSS_CLIENT_KEY.startsWith("test_");
 
-const WAITLIST_KEY = "myeongri-vip-waitlist";
-/** 폼 수집 서비스(Formspree, Google Apps Script 등) 엔드포인트. 미설정 시 브라우저에만 저장됩니다. */
-const WAITLIST_ENDPOINT = process.env.NEXT_PUBLIC_WAITLIST_ENDPOINT ?? "";
-
-export default function VipModal({ open, onClose, themeLabel, lockHint, lockCount }: Props) {
+export default function VipModal({ open, onClose, ...rest }: Omit<Props, "open"> & { open: boolean }) {
   if (!open) return null;
-  return <VipModalBody onClose={onClose} themeLabel={themeLabel} lockHint={lockHint} lockCount={lockCount} />;
+  return <VipModalBody onClose={onClose} {...rest} />;
 }
 
-/** 열릴 때마다 새로 마운트되어 입력·상태가 초기화됩니다. */
-function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, "open">) {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [planKey, setPlanKey] = useState<PlanKey>("full");
-  const plan = PLANS.find((p) => p.key === planKey) ?? PLANS[1];
+type WidgetStatus = "loading" | "ready" | "error";
 
+/** 열릴 때마다 새로 마운트되어 위젯·상태가 초기화됩니다. */
+function VipModalBody({ onClose, themeLabel, concern, returnQuery, lockHint, lockCount, owned }: Omit<Props, "open">) {
+  const ownsSingle = owned?.plan === "single";
+  const [planKey, setPlanKey] = useState<PlanKey>("full");
+  const plan = planOf(planKey) ?? PLANS[1];
+  const [widgetStatus, setWidgetStatus] = useState<WidgetStatus>("loading");
+  const [agreed, setAgreed] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const widgetRef = useRef<PaymentWidgetInstance | null>(null);
+  const methodsRef = useRef<ReturnType<PaymentWidgetInstance["renderPaymentMethods"]> | null>(null);
+
+  // ESC 닫기 + 배경 스크롤 잠금
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -66,23 +67,55 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [onClose]);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const v = email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { setStatus("error"); return; }
-    setStatus("sending");
-    try {
-      if (WAITLIST_ENDPOINT) {
-        await fetch(WAITLIST_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: v, theme: themeLabel, lock: lockHint ?? null, plan: plan.key, price: plan.price, source: "myeongri-vip-waitlist", at: new Date().toISOString() }),
-        });
+  // 토스 결제위젯 로드 + 렌더 (SSR 회피를 위해 동적 import)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { loadPaymentWidget, ANONYMOUS } = await import("@tosspayments/payment-widget-sdk");
+        const widget = await loadPaymentWidget(TOSS_CLIENT_KEY, ANONYMOUS);
+        if (cancelled) return;
+        widgetRef.current = widget;
+        const initial = planOf("full")!;
+        methodsRef.current = widget.renderPaymentMethods("#toss-payment-methods", { value: initial.price }, { variantKey: "DEFAULT" });
+        const agreement = widget.renderAgreement("#toss-agreement", { variantKey: "AGREEMENT" });
+        agreement.on("change", (s) => setAgreed(s.agreedRequiredTerms));
+        methodsRef.current.on("ready", () => { if (!cancelled) setWidgetStatus("ready"); });
+      } catch (e) {
+        console.error("[unselog] toss widget load failed", e);
+        if (!cancelled) setWidgetStatus("error");
       }
-      const list: string[] = JSON.parse(localStorage.getItem(WAITLIST_KEY) ?? "[]");
-      if (!list.includes(v)) localStorage.setItem(WAITLIST_KEY, JSON.stringify([...list, v]));
-    } catch { /* 네트워크 실패 시에도 로컬 기록은 유지 */ }
-    setStatus("done");
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // 플랜 변경 시 위젯 금액 갱신
+  useEffect(() => {
+    methodsRef.current?.updateAmount(plan.price);
+  }, [plan.price]);
+
+  const pay = async () => {
+    const widget = widgetRef.current;
+    if (!widget || paying) return;
+    setError(null);
+    setPaying(true);
+    const orderId = `UL-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    savePendingOrder({ orderId, plan: plan.key, amount: plan.price, concern, returnQuery, createdAt: Date.now() });
+    const origin = window.location.origin;
+    const ctx = `plan=${plan.key}&c=${encodeURIComponent(concern)}&r=${encodeURIComponent(returnQuery)}`;
+    try {
+      await widget.requestPayment({
+        orderId,
+        orderName: plan.orderName,
+        successUrl: `${origin}/pay/success/?${ctx}`,
+        failUrl: `${origin}/pay/fail/?${ctx}`,
+      });
+    } catch (e) {
+      const err = e as { code?: string; message?: string };
+      if (err?.code === "USER_CANCEL") setError("결제가 취소되었습니다. 다시 시도하실 수 있습니다.");
+      else setError(err?.message ?? "결제창을 여는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      setPaying(false);
+    }
   };
 
   return (
@@ -104,11 +137,11 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-gold/50 bg-gold/10 text-gold shadow-[0_0_28px_rgba(229,184,105,.3)]">
           <Crown size={26} />
         </div>
-        <p className="mt-4 text-center text-[11px] tracking-[0.35em] text-gold-2">上位 1% · 財閥家 VIP 看命</p>
+        <p className="mt-4 text-center text-[11px] tracking-[0.35em] text-gold-2">{SITE_NAME.toUpperCase()} · VIP 看命 解禁</p>
         <h3 id="vip-modal-title" className="gold-text mt-1 text-center text-xl font-black leading-tight sm:text-2xl">
-          상위 1% 재벌가<br />VIP 간명 비책 해금
+          잠긴 결정적 값을<br />데이터 그대로 엽니다
         </h3>
-        <p className="mt-2 text-center text-[13px] font-semibold text-fg/80">단 한 번의 간명으로 2026-2027 내 운명의 비밀 7가지 완전 해금</p>
+        <p className="mt-2 text-center text-[13px] font-semibold text-fg/80">좋은 달만 고르지 않습니다. 손재수의 달까지 2026-2027 그대로 보여드립니다.</p>
         <p className="mt-3 text-center text-sm leading-relaxed text-fg/70">
           {lockHint ? (
             <>방금 누르신 <span className="inline-lock !cursor-default"><Lock size={11} /> {lockHint}</span> 자리는 <b className="text-gold-light">{themeLabel}</b> 간명의 결정적 열쇠입니다.</>
@@ -131,15 +164,16 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
         <div role="radiogroup" aria-label="해금 옵션 선택" className="mt-4 space-y-2">
           {PLANS.map((pl, i) => {
             const active = pl.key === planKey;
+            const disabled = ownsSingle && pl.key === "single";
             return (
               <button
                 key={pl.key}
                 type="button"
                 role="radio"
                 aria-checked={active}
-                disabled={status === "done"}
+                disabled={disabled || paying}
                 onClick={() => setPlanKey(pl.key)}
-                className={`relative w-full rounded-xl border p-3.5 text-left transition ${
+                className={`relative w-full rounded-xl border p-3.5 text-left transition disabled:opacity-50 ${
                   active ? "border-gold bg-gold/15 shadow-[inset_0_0_14px_rgba(229,184,105,.18)]" : "border-gold-2/25 bg-ink/50 hover:border-gold-2/60"
                 }`}
               >
@@ -159,52 +193,47 @@ function VipModalBody({ onClose, themeLabel, lockHint, lockCount }: Omit<Props, 
                         {pl.original && <span className="rounded-full bg-[#C2413B] px-1.5 py-0.5 text-[10px] font-bold text-white">{Math.round((1 - pl.price / pl.original) * 100)}% 할인</span>}
                       </span>
                     </span>
-                    <span className="mt-1 block text-[12px] leading-snug text-fg/60">{pl.desc}</span>
+                    <span className="mt-1 block text-[12px] leading-snug text-fg/60">{disabled ? "이미 보유 중인 해금권입니다. 풀패키지로 업그레이드할 수 있습니다." : pl.desc}</span>
                   </span>
                 </div>
               </button>
             );
           })}
-          <p className="inline-flex items-center gap-1 px-1 text-[11px] text-fg/55"><Sparkles size={11} className="text-gold" /> 사전 예약자에 한해 오픈 시 선택한 옵션의 특가 코드를 이메일로 보내드립니다.</p>
         </div>
 
-        {status === "done" ? (
-          <div className="mt-5 rounded-xl border border-wood/40 bg-wood/10 p-4 text-center">
-            <p className="inline-flex items-center gap-1.5 font-bold text-wood-text"><Check size={16} /> VIP 사전 예약이 완료되었습니다</p>
-            <p className="mt-1 text-xs text-fg/60">해금 오픈 시 <b className="text-gold-light">{plan.title.replace("👑 ", "")} {won(plan.price)}</b> 특가 코드를 가장 먼저 보내드립니다.</p>
-            <button type="button" onClick={onClose} className="mt-4 w-full rounded-xl border border-gold-2/40 px-4 py-2.5 text-sm text-gold transition hover:bg-gold/10">닫기</button>
+        {/* 토스페이먼츠 결제위젯 */}
+        <div className="mt-5">
+          <p className="mb-2 flex items-center gap-1.5 text-[11px] tracking-wider text-gold-2"><CreditCard size={12} /> 결제 수단 선택 {IS_TEST_KEY && <span className="rounded-full border border-gold-2/40 px-1.5 py-0.5 text-[10px] text-fg/55">테스트 모드 · 실제 청구 없음</span>}</p>
+          {widgetStatus === "loading" && (
+            <p className="flex items-center justify-center gap-2 rounded-xl border border-gold-2/25 bg-ink/50 py-6 text-xs text-fg/55"><Loader2 size={14} className="animate-spin text-gold" /> 결제 수단을 불러오는 중…</p>
+          )}
+          {widgetStatus === "error" && (
+            <p className="rounded-xl border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-3 text-xs leading-relaxed text-fire-text">결제 모듈을 불러오지 못했습니다. 광고 차단 확장이 켜져 있다면 잠시 해제한 뒤 새로고침해 주세요.</p>
+          )}
+          <div className={widgetStatus === "ready" ? "space-y-2" : "h-0 overflow-hidden"}>
+            <div id="toss-payment-methods" className="toss-widget" />
+            <div id="toss-agreement" className="toss-widget" />
           </div>
-        ) : (
-          <form onSubmit={submit} className="mt-5 space-y-3" noValidate>
-            <label className="block">
-              <span className="sr-only">이메일 주소</span>
-              <input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="알림 받을 이메일 주소"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
-                className="input-dark w-full"
-                aria-invalid={status === "error"}
-              />
-            </label>
-            {status === "error" && <p className="text-xs text-fire-text">올바른 이메일 주소를 입력해 주세요.</p>}
-            <button
-              type="submit"
-              disabled={status === "sending"}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-5 py-3 text-sm font-bold text-on-gold transition hover:brightness-110 disabled:opacity-60"
-            >
-              <BellRing size={16} /> {status === "sending" ? "신청 중…" : plan.cta}
-            </button>
-            <button type="button" onClick={onClose} className="w-full rounded-xl px-4 py-2 text-xs text-fg/50 transition hover:text-fg">
-              괜찮아요, 다음에 볼게요
-            </button>
-            <p className="text-center text-[10px] leading-relaxed text-fg/40">
-              입력하신 이메일은 오픈 알림 발송 목적으로만 사용되며 언제든 수신을 거부할 수 있습니다.
-            </p>
-          </form>
-        )}
+        </div>
+
+        {error && <p className="mt-3 rounded-lg border border-[#C2413B]/50 bg-[#C2413B]/10 px-3 py-2 text-xs text-fire-text">{error}</p>}
+
+        <button
+          type="button"
+          onClick={pay}
+          disabled={widgetStatus !== "ready" || !agreed || paying}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-5 py-3.5 text-sm font-bold text-on-gold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {paying ? <Loader2 size={16} className="animate-spin" /> : <Unlock size={16} />} {paying ? "결제창 여는 중…" : plan.cta}
+        </button>
+        <button type="button" onClick={onClose} disabled={paying} className="mt-2 w-full rounded-xl px-4 py-2 text-xs text-fg/50 transition hover:text-fg">
+          괜찮아요, 다음에 볼게요
+        </button>
+        <p className="mt-2 flex items-start justify-center gap-1.5 text-center text-[10px] leading-relaxed text-fg/40">
+          <ShieldCheck size={12} className="mt-0.5 shrink-0" />
+          <span>결제는 토스페이먼츠 보안 결제창에서 진행되며 카드 정보는 {SITE_NAME}에 저장되지 않습니다. 결제 완료 즉시 이 기기의 브라우저에 해금 상태가 저장되어 자물쇠가 열립니다. 디지털 콘텐츠 특성상 해금 이후 환불은 <a href="/refund/" className="underline underline-offset-2">환불규정</a>을 따릅니다.</span>
+        </p>
+        <p className="mt-1 text-center text-[10px] text-fg/35"><Sparkles size={10} className="mr-0.5 inline text-gold" /> 로그인 없이 결제되며, 해금 기록은 결제한 브라우저에 보관됩니다. 브라우저 데이터를 지우면 주문번호로 복구를 요청해 주세요.</p>
       </div>
     </div>
   );

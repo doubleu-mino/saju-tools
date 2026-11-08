@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Unlock } from "lucide-react";
 import type { LockKind, LockToken, Segment } from "@/lib/pinpoint";
 import { isLock } from "@/lib/pinpoint";
 
@@ -46,11 +46,25 @@ export default function InlineLock({ token, onUnlock }: LockProps) {
   );
 }
 
-/** Segment 배열을 문장 + 인라인 자물쇠로 렌더링 */
-export function LockedText({ segments, onUnlock }: { segments: Segment[]; onUnlock: (c: LockClick) => void }) {
+/** 해금된 결정적 값 — 실제 계산 텍스트를 골드 하이라이트로 표시 */
+export function UnlockedValue({ token }: { token: LockToken }) {
+  return (
+    <mark className="inline-unlocked" title={`해금됨 · ${KIND_LABEL[token.kind]}`}>
+      <Unlock size={11} aria-hidden="true" />
+      <span>{token.value}</span>
+    </mark>
+  );
+}
+
+/** Segment 배열을 문장 + 인라인 자물쇠(또는 해금 값)로 렌더링 */
+export function LockedText({ segments, onUnlock, unlocked = false }: { segments: Segment[]; onUnlock: (c: LockClick) => void; unlocked?: boolean }) {
   return (
     <>
-      {segments.map((s, i) => (isLock(s) ? <InlineLock key={i} token={s} onUnlock={onUnlock} /> : <span key={i}>{s}</span>))}
+      {segments.map((s, i) =>
+        isLock(s)
+          ? unlocked ? <UnlockedValue key={i} token={s} /> : <InlineLock key={i} token={s} onUnlock={onUnlock} />
+          : <span key={i}>{s}</span>,
+      )}
     </>
   );
 }

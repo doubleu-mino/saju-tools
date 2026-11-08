@@ -9,13 +9,15 @@ import {
 
 interface Props {
   initial?: SajuInput | null;
+  /** 홈 퀵 카드에서 고른 고민 — 바뀔 때마다 고민 칩을 즉시 선택 */
+  presetConcern?: ConcernKey | null;
   onSubmit: (input: SajuInput) => void;
 }
 
 const YEARS = Array.from({ length: YEAR_MAX - YEAR_MIN + 1 }, (_, i) => YEAR_MAX - i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-export default function SajuForm({ initial, onSubmit }: Props) {
+export default function SajuForm({ initial, presetConcern = null, onSubmit }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [gender, setGender] = useState<Gender>(initial?.gender ?? "male");
   const [calendar, setCalendar] = useState<CalendarType>(initial?.calendar ?? "solar");
@@ -24,9 +26,16 @@ export default function SajuForm({ initial, onSubmit }: Props) {
   const [day, setDay] = useState(initial?.day ?? 1);
   const [hour, setHour] = useState<string>(initial ? (initial.hourBranch === null ? "x" : String(initial.hourBranch)) : "x");
   const [region, setRegion] = useState<RegionKey>(initial?.region ?? "seoul");
-  const [concern, setConcern] = useState<ConcernKey | null>(initial?.concern ?? null);
+  const [concern, setConcern] = useState<ConcernKey | null>(presetConcern ?? initial?.concern ?? null);
   const [wish, setWish] = useState<WishKey | null>(initial?.wish ?? null);
   const [error, setError] = useState<string | null>(null);
+
+  // 퀵 카드 선택이 바뀌면 렌더 중에 파생 상태로 반영 (effect 없이)
+  const [prevPreset, setPrevPreset] = useState<ConcernKey | null>(presetConcern);
+  if (presetConcern !== prevPreset) {
+    setPrevPreset(presetConcern);
+    if (presetConcern) { setConcern(presetConcern); setError(null); }
+  }
 
   const leapMonth = useMemo(() => (calendar === "lunar-leap" ? leapMonthOf(year) : 0), [calendar, year]);
 
@@ -81,7 +90,7 @@ export default function SajuForm({ initial, onSubmit }: Props) {
       <div className="mb-6 text-center">
         <p className="text-[11px] tracking-[0.35em] text-gold-2">四柱八字 · 五行</p>
         <h2 className="gold-text mt-1 text-2xl font-black sm:text-3xl">나의 사주 원국 열람</h2>
-        <p className="mt-2 text-sm text-fg/60">생년월일시를 입력하면 사주원국 8글자·오행 분포·일간 성향·인생 종합 총운을 무료로 풀어드립니다.</p>
+        <p className="mt-2 text-sm text-fg/60">생년월일시를 입력하면 사주원국 8글자·오행 분포·일간 성향·인생 종합 총운을 무료로 풀어드립니다. 로그인은 필요 없습니다.</p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">

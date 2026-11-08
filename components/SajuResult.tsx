@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Compass, Palette, Hash, Sparkles, Star, Gem, Lock, Unlock, Crown, Flame, ChevronRight, Target, ShieldAlert } from "lucide-react";
 import {
-  SajuResult as SajuResultType, Pillar, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, ELEMENT_DESC, Element,
+  SajuResult as SajuResultType, Pillar, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, ELEMENT_DESC, Element, encodeInput,
 } from "@/lib/saju";
 import { DAY_MASTER_PROFILES, buildThemeReport, EXCESS_TEXT, LACK_TEXT, currentDaeun } from "@/lib/interpretations";
 import { buildPinpoint, TIER_META, yearGodSummary, MonthCard, YearTimeline } from "@/lib/pinpoint";
+import { useUnlock, scopeOf, planOf, won } from "@/lib/unlock";
 import ShareCard from "./ShareCard";
 import VipModal from "./VipModal";
 import { LockedText, LockClick } from "./InlineLock";
@@ -77,6 +78,12 @@ export default function SajuResult({ result: r, onReset }: Props) {
   const y27 = useMemo(() => yearGodSummary(r, 2027), [r]);
   const [calYear, setCalYear] = useState<2026 | 2027>(2026);
   const timeline = pin.timelines.find((t) => t.year === calYear) ?? pin.timelines[0];
+
+  // 해금 상태 (localStorage) → 인라인 락 · 타임라인 자물쇠 즉시 전환
+  const unlock = useUnlock();
+  const scope = scopeOf(unlock, r.input.concern);
+  const returnQuery = useMemo(() => encodeInput(r.input), [r]);
+  const fullPlan = planOf("full")!;
 
   // VIP 모달 (자물쇠 클릭 시 어떤 항목을 눌렀는지 전달)
   const [vipOpen, setVipOpen] = useState(false);
@@ -301,7 +308,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
             <div key={i} className="border-l-2 border-gold-2/50 pl-4">
               <h4 className="font-bold text-gold-light">{para.heading}</h4>
               <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85">
-                <LockedText segments={para.segments} onUnlock={openVip} />
+                <LockedText segments={para.segments} onUnlock={openVip} unlocked={scope.inline} />
               </p>
             </div>
           ))}
@@ -314,40 +321,70 @@ export default function SajuResult({ result: r, onReset }: Props) {
             <div key={para.heading} className="mt-3">
               <h4 className="font-bold text-gold-light">{para.heading}</h4>
               <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85">
-                <LockedText segments={para.segments} onUnlock={openVip} />
+                <LockedText segments={para.segments} onUnlock={openVip} unlocked={scope.inline} />
               </p>
             </div>
           ))}
         </div>
 
-        {/* 재벌가 비전 간명식 요약 카드 */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <button type="button" onClick={() => openVip("?씨 성")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
-            <p className="text-[11px] tracking-wider text-gold-2">재벌가 비전 간명식 · 귀인 성씨 초성</p>
-            <p className="mt-2 flex items-center gap-2 text-lg font-black text-gold-light">
-              <span className="inline-lock"><Lock size={11} /> ?/? 초성</span>
-              <span className="inline-lock"><Lock size={11} /> ?/? 초성</span>
-            </p>
-            <p className="mt-1.5 text-xs text-fg/50">용신·희신 소리오행으로 산출 · 천을귀인 {pin.benefactor.zodiacs.join("·")}띠</p>
-          </button>
-          <button type="button" onClick={() => openVip("??? 물상")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
-            <p className="text-[11px] tracking-wider text-gold-2">삼재·관살·손재수 무력화 비책</p>
-            <p className="mt-2 text-lg font-black text-gold-light">
-              보완 오행 <span style={{ color: pin.remedy.element === "수" ? "var(--water-text)" : ELEMENT_COLOR[pin.remedy.element] }}>{pin.remedy.element}({ELEMENT_HANJA[pin.remedy.element]})</span>
-            </p>
-            <p className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-fg/50">물상 <span className="inline-lock"><Lock size={11} /> ???</span> · 방위 <span className="inline-lock"><Lock size={11} /> ?쪽</span></p>
-          </button>
-          <button type="button" onClick={() => openVip("???격")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
-            <p className="text-[11px] tracking-wider text-gold-2">격국(格局) · 월지 {r.pillars[1].branchHanja} 기준</p>
-            <p className="mt-2 text-lg font-black text-gold-light"><span className="inline-lock"><Lock size={11} /> ???격</span></p>
-            <p className="mt-1.5 text-xs text-fg/50">{r.strength.label} · 월지 {r.pillars[1].branchGod} 투출 여부로 판정</p>
-          </button>
-        </div>
-        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-fg/40"><ShieldAlert size={12} className="mt-0.5 shrink-0" /> 월운은 절입일(매월 4~8일) 기준 월건으로 산출되며, 달력 월과 수일의 차이가 있을 수 있습니다. 자물쇠 항목은 VIP 간명 해금 시 공개됩니다.</p>
+        {/* 비전 간명식 요약 카드 — 해금 시 실제 계산값 표시 */}
+        {scope.inline ? (
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="gold-open-card rounded-xl p-4 text-left">
+              <p className="text-[11px] tracking-wider text-gold-2">비전 간명식 · 귀인 성씨 초성</p>
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-lg font-black text-gold-light">
+                <span className="inline-unlocked !m-0"><Unlock size={11} /> {pin.benefactor.consonants[0]}</span>
+                <span className="inline-unlocked !m-0"><Unlock size={11} /> {pin.benefactor.consonants[1]}</span>
+              </p>
+              <p className="mt-1.5 text-xs leading-relaxed text-fg/60">예: {pin.benefactor.surnames[0]} / {pin.benefactor.surnames[1]} · 천을귀인 {pin.benefactor.zodiacs.join("·")}띠</p>
+            </div>
+            <div className="gold-open-card rounded-xl p-4 text-left">
+              <p className="text-[11px] tracking-wider text-gold-2">삼재·관살·손재수 무력화 비책</p>
+              <p className="mt-2 text-lg font-black text-gold-light">
+                보완 오행 <span style={{ color: pin.remedy.element === "수" ? "var(--water-text)" : ELEMENT_COLOR[pin.remedy.element] }}>{pin.remedy.element}({ELEMENT_HANJA[pin.remedy.element]})</span>
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-fg/60">물상 <span className="inline-unlocked"><Unlock size={11} /> {pin.remedy.item}</span> · 방위 <span className="inline-unlocked"><Unlock size={11} /> {pin.remedy.direction}</span></p>
+            </div>
+            <div className="gold-open-card rounded-xl p-4 text-left">
+              <p className="text-[11px] tracking-wider text-gold-2">격국(格局) · 월지 {r.pillars[1].branchHanja} 기준</p>
+              <p className="mt-2 text-lg font-black text-gold-light"><span className="inline-unlocked !m-0"><Unlock size={11} /> {pin.gyeokguk}</span></p>
+              <p className="mt-1.5 text-xs text-fg/60">{r.strength.label} · 월지 {r.pillars[1].branchGod} 투출 여부로 판정</p>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <button type="button" onClick={() => openVip("?씨 성")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
+              <p className="text-[11px] tracking-wider text-gold-2">비전 간명식 · 귀인 성씨 초성</p>
+              <p className="mt-2 flex items-center gap-2 text-lg font-black text-gold-light">
+                <span className="inline-lock"><Lock size={11} /> ?/? 초성</span>
+                <span className="inline-lock"><Lock size={11} /> ?/? 초성</span>
+              </p>
+              <p className="mt-1.5 text-xs text-fg/50">용신·희신 소리오행으로 산출 · 천을귀인 {pin.benefactor.zodiacs.join("·")}띠</p>
+            </button>
+            <button type="button" onClick={() => openVip("??? 물상")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
+              <p className="text-[11px] tracking-wider text-gold-2">삼재·관살·손재수 무력화 비책</p>
+              <p className="mt-2 text-lg font-black text-gold-light">
+                보완 오행 <span style={{ color: pin.remedy.element === "수" ? "var(--water-text)" : ELEMENT_COLOR[pin.remedy.element] }}>{pin.remedy.element}({ELEMENT_HANJA[pin.remedy.element]})</span>
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-fg/50">물상 <span className="inline-lock"><Lock size={11} /> ???</span> · 방위 <span className="inline-lock"><Lock size={11} /> ?쪽</span></p>
+            </button>
+            <button type="button" onClick={() => openVip("???격")} className="group rounded-xl border border-gold-2/25 bg-ink/50 p-4 text-left transition hover:border-gold/60">
+              <p className="text-[11px] tracking-wider text-gold-2">격국(格局) · 월지 {r.pillars[1].branchHanja} 기준</p>
+              <p className="mt-2 text-lg font-black text-gold-light"><span className="inline-lock"><Lock size={11} /> ???격</span></p>
+              <p className="mt-1.5 text-xs text-fg/50">{r.strength.label} · 월지 {r.pillars[1].branchGod} 투출 여부로 판정</p>
+            </button>
+          </div>
+        )}
+        {unlock?.plan === "single" && !scope.inline && (
+          <p className="mt-3 rounded-lg border border-gold-2/30 bg-gold/5 px-3 py-2 text-[12px] leading-relaxed text-fg/65">
+            보유하신 단품 해금권은 구매 당시 선택한 고민에만 적용됩니다. 다른 고민의 키워드는 풀패키지로 열 수 있습니다.
+          </p>
+        )}
+        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-fg/40"><ShieldAlert size={12} className="mt-0.5 shrink-0" /> 월운은 절입일(매월 4~8일) 기준 월건으로 산출되며, 달력 월과 수일의 차이가 있을 수 있습니다. {scope.inline ? "해금된 값은 전통 명리학 이론에 따른 참고 자료입니다." : "자물쇠 항목은 VIP 간명 해금 시 공개됩니다."}</p>
       </Section>
 
       {/* PART 6 — 12개월 운세 캘린더 타임라인 */}
-      <Section no="06" title="2026–2027 12개월 운세 캘린더 타임라인" sub="10개 월의 기운은 공개하고, 운기 최정점 '황금의 달' 1곳과 각별 주의 '손재수의 달' 1곳은 VIP 황금 자물쇠로 잠겨 있습니다.">
+      <Section no="06" title="2026–2027 12개월 운세 캘린더 타임라인" sub={scope.timeline ? "운기 최정점 '황금의 달'과 각별 주의 '손재수의 달'까지 24개월 전부 해금되었습니다." : "10개 월의 기운은 공개하고, 운기 최정점 '황금의 달' 1곳과 각별 주의 '손재수의 달' 1곳은 VIP 황금 자물쇠로 잠겨 있습니다."}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div role="tablist" aria-label="연도 선택" className="inline-flex rounded-xl border border-gold-2/30 bg-ink/60 p-1">
             {pin.timelines.map((t) => (
@@ -368,23 +405,34 @@ export default function SajuResult({ result: r, onReset }: Props) {
             {(["opportunity", "rising", "calm"] as const).map((k) => (
               <span key={k} className="rounded-full border border-gold-2/25 bg-ink/50 px-2.5 py-1 text-fg/65">{TIER_META[k].emoji} {TIER_META[k].label}</span>
             ))}
-            <span className="rounded-full border border-gold/60 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Lock size={10} className="mr-0.5 inline" /> VIP 열람 2곳</span>
+            {scope.timeline ? (
+              <span className="rounded-full border border-gold/60 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Unlock size={10} className="mr-0.5 inline" /> 전체 해금</span>
+            ) : (
+              <span className="rounded-full border border-gold/60 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Lock size={10} className="mr-0.5 inline" /> VIP 열람 2곳</span>
+            )}
           </div>
         </div>
 
-        <div key={calYear} className="animate-rise grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-          {timeline.months.map((m) => <MonthTile key={m.month} m={m} t={timeline} onUnlock={openVip} />)}
+        <div key={`${calYear}-${scope.timeline}`} className="animate-rise grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+          {timeline.months.map((m) => <MonthTile key={m.month} m={m} t={timeline} unlocked={scope.timeline} onUnlock={openVip} />)}
         </div>
 
-        <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
-          <p className="leading-relaxed text-fg/80">
+        {scope.timeline ? (
+          <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm leading-relaxed text-fg/80">
             <Crown size={14} className="mr-1 inline text-gold" />
-            잠긴 두 달 중 하나는 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">운기 최정점 황금의 달</b>, 다른 하나는 <b className="text-fire-text">각별 주의 손재수의 달</b>입니다. 기운이 화합하는 시기를 아는 것이 한 해 발복 확률을 극대화하는 핵심입니다.
-          </p>
-          <button type="button" onClick={() => openVip("VIP 열람")} className="mt-3 inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-4 py-2.5 text-sm font-bold text-on-gold transition hover:brightness-110 sm:mt-0">
-            <Lock size={14} /> 두 달 즉시 해금 <ChevronRight size={14} />
-          </button>
-        </div>
+            {timeline.year}년 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">황금의 달은 {timeline.golden}월</b>, <b className="text-fire-text">손재수의 달은 {timeline.danger}월</b>입니다. 황금의 달에는 계약·고백·착수를, 손재수의 달에는 고액 지출·보증·원행을 피하는 쪽으로 일정을 잡으세요.
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4 text-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <p className="leading-relaxed text-fg/80">
+              <Crown size={14} className="mr-1 inline text-gold" />
+              잠긴 두 달 중 하나는 {r.name ? `${r.name}님` : "당신"}의 <b className="text-gold-light">운기 최정점 황금의 달</b>, 다른 하나는 <b className="text-fire-text">각별 주의 손재수의 달</b>입니다. {unlock?.plan === "single" ? "타임라인 두 달은 풀패키지에서 열립니다." : "기운이 화합하는 시기를 아는 것이 한 해 발복 확률을 극대화하는 핵심입니다."}
+            </p>
+            <button type="button" onClick={() => openVip("VIP 열람")} className="mt-3 inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-4 py-2.5 text-sm font-bold text-on-gold transition hover:brightness-110 sm:mt-0">
+              <Lock size={14} /> 두 달 즉시 해금 <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
       </Section>
 
       {/* PART 7 */}
@@ -392,7 +440,16 @@ export default function SajuResult({ result: r, onReset }: Props) {
         <ShareCard result={r} />
       </Section>
 
-      <VipModal open={vipOpen} onClose={() => setVipOpen(false)} themeLabel={pin.concern.short} lockHint={lockHint} lockCount={pin.lockCount} />
+      <VipModal
+        open={vipOpen}
+        onClose={() => setVipOpen(false)}
+        themeLabel={pin.concern.short}
+        concern={r.input.concern}
+        returnQuery={returnQuery}
+        lockHint={lockHint}
+        lockCount={pin.lockCount}
+        owned={unlock}
+      />
 
       <div className="flex justify-center pt-2">
         <button onClick={onReset} className="inline-flex items-center gap-2 rounded-xl border border-gold-2/40 px-6 py-3 text-sm text-gold transition hover:bg-gold/10">
@@ -401,7 +458,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
       </div>
 
       {/* 하단 고정 CTA 배너 */}
-      {showCta && !vipOpen && (
+      {showCta && !vipOpen && !scope.timeline && (
         <div className="sticky-cta fixed inset-x-0 bottom-0 z-40 px-3 pb-3 sm:px-4 sm:pb-4" role="region" aria-label="VIP 해금 안내">
           <div className="mx-auto max-w-3xl">
             <button
@@ -411,8 +468,12 @@ export default function SajuResult({ result: r, onReset }: Props) {
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-black/15"><Lock size={16} /></span>
               <span className="flex-1 leading-tight">
-                내 사주의 막힌 운을 뚫는 <u className="decoration-2 underline-offset-2">7가지 VIP 비책</u> &amp; 황금의 달 즉시 해금
-                <span className="mt-0.5 block text-[11px] font-semibold opacity-80">잠긴 항목 {pin.lockCount}곳 · 런칭 특가 14,900원 (정가 29,900원)</span>
+                {unlock?.plan === "single" ? (
+                  <>황금의 달·손재수의 달까지 <u className="decoration-2 underline-offset-2">풀패키지로 업그레이드</u></>
+                ) : (
+                  <>내 사주의 막힌 운을 뚫는 <u className="decoration-2 underline-offset-2">7가지 VIP 비책</u> &amp; 황금의 달 즉시 해금</>
+                )}
+                <span className="mt-0.5 block text-[11px] font-semibold opacity-80">잠긴 항목 {pin.lockCount}곳 · 얼리버드 {won(fullPlan.price)} (정가 {won(fullPlan.original ?? fullPlan.price)})</span>
               </span>
               <ChevronRight size={18} className="shrink-0" />
             </button>
@@ -425,10 +486,29 @@ export default function SajuResult({ result: r, onReset }: Props) {
 
 /* ───────────────────────── 월운 타일 ───────────────────────── */
 
-function MonthTile({ m, t, onUnlock }: { m: MonthCard; t: YearTimeline; onUnlock: (hint: string) => void }) {
-  const locked = m.tier === "golden" || m.tier === "danger";
+function MonthTile({ m, t, unlocked, onUnlock }: { m: MonthCard; t: YearTimeline; unlocked: boolean; onUnlock: (hint: string) => void }) {
+  const special = m.tier === "golden" || m.tier === "danger";
   const meta = TIER_META[m.tier];
-  if (locked) {
+  if (special && unlocked) {
+    const danger = m.tier === "danger";
+    return (
+      <div className={`gold-open-card flex min-h-[132px] flex-col rounded-xl p-3 ${danger ? "is-danger" : ""}`} aria-label={`${m.month}월 — ${meta.label}`}>
+        <div className="flex items-start justify-between">
+          <span className={`text-[13px] font-black ${danger ? "text-fire-text" : "text-gold-light"}`}>{m.month}월</span>
+          <span className="text-base font-black tracking-wider" style={{ fontFamily: "var(--font-hanja)" }}>
+            <span style={{ color: m.stemElement === "수" ? "var(--water-text)" : ELEMENT_COLOR[m.stemElement] }}>{m.ganzhi[0]}</span>
+            <span style={{ color: m.branchElement === "수" ? "var(--water-text)" : ELEMENT_COLOR[m.branchElement] }}>{m.ganzhi[1]}</span>
+          </span>
+        </div>
+        <span className={`mt-1.5 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${danger ? "bg-[#C2413B]/25 text-fire-text" : "bg-gold/25 text-gold-light"}`}>
+          {meta.emoji} {meta.label}
+        </span>
+        <p className="mt-2 text-[11px] leading-snug text-fg/75">{m.keyword}</p>
+        <p className="mt-auto pt-2 text-[10px] text-fg/50">{m.stemGod}·{m.branchGod} · {m.shinsal}</p>
+      </div>
+    );
+  }
+  if (special) {
     return (
       <button
         type="button"

@@ -1,19 +1,30 @@
 import type { Metadata } from "next";
 import StaticPage from "@/components/StaticPage";
+import Link from "next/link";
+import { SITE_NAME, SITE_NAME_EN, BUSINESS } from "@/lib/site";
 
-export const metadata: Metadata = { title: "이용약관", description: "명리원(明理院) 서비스 이용약관" };
+export const metadata: Metadata = { title: "이용약관", description: "운세로그(UnseLog) 서비스 이용약관" };
 
 export default function TermsPage() {
   return (
     <StaticPage eyebrow="TERMS" title="이용약관" updated="2026년 11월 8일">
       <h2>제1조 (목적)</h2>
-      <p>본 약관은 명리원(明理院)(이하 &ldquo;서비스&rdquo;)이 제공하는 사주 만세력 및 해석 콘텐츠의 이용 조건과 절차, 이용자와 서비스의 권리·의무를 규정함을 목적으로 합니다.</p>
+      <p>본 약관은 {SITE_NAME}({SITE_NAME_EN})(이하 &ldquo;서비스&rdquo;)이 제공하는 사주 만세력, 해석 콘텐츠 및 유료 해금 콘텐츠의 이용 조건과 절차, 이용자와 서비스의 권리·의무를 규정함을 목적으로 합니다.</p>
 
       <h2>제2조 (서비스의 내용)</h2>
       <ul>
         <li>서비스는 이용자가 입력한 생년월일·시간·지역 정보를 바탕으로 사주팔자, 오행 분포, 일간 기질 및 테마별 해석을 제공합니다.</li>
-        <li>서비스는 무료로 제공되며, 회원 가입 없이 누구나 이용할 수 있습니다.</li>
-        <li>모든 계산은 이용자의 브라우저에서 수행되며, 서비스는 입력 데이터를 수집·저장하지 않습니다.</li>
+        <li>기본 분석(사주원국·오행·일간 성향·인생 종합 총운·월운 10개월)은 무료로 제공되며, 회원 가입이나 로그인 없이 누구나 이용할 수 있습니다.</li>
+        <li>모든 사주 계산은 이용자의 브라우저에서 수행되며, 서비스는 입력 데이터를 수집·저장하지 않습니다.</li>
+        <li>일부 결정적 항목(결정적 달·귀인 성씨·황금의 달·손재수의 달 등)은 유료 해금 콘텐츠로 제공됩니다.</li>
+      </ul>
+
+      <h2>제2조의2 (유료 해금 콘텐츠)</h2>
+      <ul>
+        <li>유료 콘텐츠의 종류와 가격은 결제창에 표시된 내용을 따르며, 1회 결제형 디지털 콘텐츠로 정기 결제(구독)가 아닙니다.</li>
+        <li>결제는 토스페이먼츠 결제창을 통해 이루어지며, 서비스는 카드번호 등 결제 수단 정보를 저장하지 않습니다.</li>
+        <li>결제 완료 시 해금 상태는 결제한 기기의 브라우저 저장소에 보관되어 잠긴 항목이 열립니다. 서비스는 로그인 기능이 없으므로 다른 기기에서의 열람은 주문번호 확인 후 복구 방식으로 지원합니다.</li>
+        <li>청약철회와 환불은 <Link href="/refund/">전자상거래 환불규정</Link>을 따릅니다.</li>
       </ul>
 
       <h2>제3조 (콘텐츠의 성격 및 면책)</h2>
@@ -35,8 +46,12 @@ export default function TermsPage() {
       <h2>제7조 (약관의 변경)</h2>
       <p>본 약관은 관련 법령의 변경이나 서비스 정책에 따라 개정될 수 있으며, 변경된 약관은 본 페이지에 게시한 시점부터 효력이 발생합니다.</p>
 
-      <h2>제8조 (문의)</h2>
-      <p>서비스 이용과 관련한 문의는 <a href="mailto:doubleu.mino@gmail.com">doubleu.mino@gmail.com</a>으로 보내주시기 바랍니다.</p>
+      <h2>제8조 (문의 및 사업자 정보)</h2>
+      <p>서비스 이용과 관련한 문의는 <a href={`mailto:${BUSINESS.email}`}>{BUSINESS.email}</a>으로 보내주시기 바랍니다.</p>
+      <ul>
+        <li>상호명: {BUSINESS.name} ({BUSINESS.nameEn}) · 대표자: {BUSINESS.owner}</li>
+        <li>사업자등록번호: {BUSINESS.registrationNo} · 통신판매업신고번호: {BUSINESS.mailOrderNo}</li>
+      </ul>
     </StaticPage>
   );
 }

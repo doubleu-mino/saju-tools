@@ -1,15 +1,16 @@
-import { ShieldCheck, Infinity as InfinityIcon, Sun } from "lucide-react";
+import { ShieldCheck, UserX, Sun } from "lucide-react";
 
-const BADGES = [
-  { icon: InfinityIcon, text: "평생 100% 무료 정통 만세력" },
-  { icon: ShieldCheck, text: "개인정보 보관 제로 (입력 데이터 즉시 파기)" },
-  { icon: Sun, text: "진태양시·서머타임 자동 보정" },
+/** 신뢰 배지 3종 — 홈·결과·소개 페이지 공통 */
+export const TRUST_BADGES = [
+  { icon: UserX, text: "로그인·회원가입 없음" },
+  { icon: ShieldCheck, text: "입력 데이터 서버 미전송 (로컬 100%)" },
+  { icon: Sun, text: "절기·진태양시 정밀 보정" },
 ];
 
 export default function TrustBadges({ compact = false }: { compact?: boolean }) {
   return (
     <ul className={`flex flex-wrap justify-center gap-2 ${compact ? "text-[11px]" : "text-xs sm:text-sm"}`}>
-      {BADGES.map(({ icon: Icon, text }) => (
+      {TRUST_BADGES.map(({ icon: Icon, text }) => (
         <li
           key={text}
           className="inline-flex items-center gap-1.5 rounded-full border border-gold-2/30 bg-ink-3/70 px-3 py-1.5 text-gold"

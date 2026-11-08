@@ -175,7 +175,7 @@ export interface MonthCard {
   branchGod: TenGod;
   shinsal: Shinsal;
   tier: MonthTier;
-  /** 공개 키워드 (잠금 월은 빈 문자열) */
+  /** 월운 키워드 — 잠금 월(golden·danger)도 값은 채워지며, 공개 여부는 UI(해금 상태)가 결정 */
   keyword: string;
   score: number;
 }
@@ -222,7 +222,7 @@ function buildTimeline(r: SajuResult, year: number): YearTimeline {
       return {
         month: m.month, ganzhi: m.g.ganzhi, ko: m.g.ko, stemElement: m.g.stemElement, branchElement: m.g.branchElement,
         stemGod: m.stemGod, branchGod: m.branchGod, shinsal: m.shinsal, tier, score: m.score,
-        keyword: tier === "golden" || tier === "danger" ? "" : `${GROUP_KEYWORD[TEN_GOD_GROUP[m.stemGod]]} · ${SHINSAL_KEYWORD[m.shinsal]}`,
+        keyword: `${GROUP_KEYWORD[TEN_GOD_GROUP[m.stemGod]]} · ${SHINSAL_KEYWORD[m.shinsal]}`,
       };
     }),
   };

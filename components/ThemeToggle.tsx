@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-export const THEME_STORAGE_KEY = "myeongri-theme"; // "yin" (dark) | "yang" (light)
+export const THEME_STORAGE_KEY = "unselog-theme"; // "yin" (dark) | "yang" (light)
 type Mode = "yin" | "yang";
 
 const subscribe = (cb: () => void) => {

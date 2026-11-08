@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, Link2, MessageCircle, Share2, Check } from "lucide-react";
 import { SajuResult, ELEMENT_COLOR, ELEMENT_TEXT_ON, ELEMENT_HANJA, ELEMENTS, BRANCH_ANIMAL, Element, encodeInput } from "@/lib/saju";
 import { yearKeyword } from "@/lib/pinpoint";
+import { SITE_NAME, SITE_NAME_EN, SITE_DOMAIN } from "@/lib/site";
 
 /* ───────── 수호 동물: 일간 오행의 색(靑赤黃白黑) + 일지 동물 ───────── */
 const GUARDIAN_COLOR: Record<Element, [string, string]> = { 목: ["청", "靑"], 화: ["적", "赤"], 토: ["황", "黃"], 금: ["백", "白"], 수: ["흑", "黑"] };
@@ -75,9 +76,9 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
     ctx.strokeStyle = "#E5B869"; ctx.lineWidth = 3; ctx.stroke();
     ctx.beginPath(); ctx.arc(W / 2, 170, 48, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(229,184,105,.4)"; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = "#E5B869"; ctx.font = `900 56px ${serif}`; ctx.fillText("明", W / 2, 190);
+    ctx.fillStyle = "#E5B869"; ctx.font = `900 56px ${serif}`; ctx.fillText("運", W / 2, 190);
     ctx.fillStyle = "#C5A059"; ctx.font = `500 24px ${serif}`;
-    ctx.fillText("明 理 院 · 正 統 萬 歲 曆 · 四 柱 推 命", W / 2, 268);
+    ctx.fillText("U N S E L O G · 正 統 萬 歲 曆 · 24 個 月 타 임 라 인", W / 2, 268);
 
     /* ── 본원과 수호 동물 ── */
     ctx.fillStyle = "rgba(239,230,210,.6)"; ctx.font = `400 26px ${serif}`;
@@ -151,15 +152,15 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
 
     /* ── 푸터 워터마크 ── */
     ctx.fillStyle = "rgba(239,230,210,.5)"; ctx.font = `400 24px ${serif}`;
-    ctx.fillText("하늘이 내린 명(命)을 풀고, 때(時)를 읽다", W / 2, 1770);
+    ctx.fillText("좋은 말로 위로하지 않습니다. 손재수의 달까지 데이터로 짚습니다.", W / 2, 1770);
     ctx.fillStyle = "#E5B869"; ctx.font = `700 30px ${serif}`;
-    ctx.fillText("내 사주 무료 간명하기  |  myeongriwon.com", W / 2, 1826);
+    ctx.fillText(`내 사주 무료 간명하기  |  ${SITE_NAME} · ${SITE_DOMAIN}`, W / 2, 1826);
   }, [r]);
 
   const download = useCallback(() => {
     const c = canvasRef.current; if (!c) return;
     const a = document.createElement("a");
-    a.download = `myeongri-${r.solar.year}${String(r.solar.month).padStart(2, "0")}${String(r.solar.day).padStart(2, "0")}.png`;
+    a.download = `unselog-${r.solar.year}${String(r.solar.month).padStart(2, "0")}${String(r.solar.day).padStart(2, "0")}.png`;
     a.href = c.toDataURL("image/png");
     a.click();
   }, [r]);
@@ -173,7 +174,7 @@ export default function ShareCard({ result: r }: { result: SajuResult }) {
 
   const webShare = useCallback(async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: "명리원 (明理院) 사주 분석", text, url: shareUrl }); return; } catch { /* cancelled */ }
+      try { await navigator.share({ title: `${SITE_NAME} (${SITE_NAME_EN}) 사주 분석`, text, url: shareUrl }); return; } catch { /* cancelled */ }
     }
     copy();
   }, [shareUrl, text, copy]);
