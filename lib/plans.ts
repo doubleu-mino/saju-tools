@@ -4,13 +4,13 @@ export type PlanKey = "single" | "full";
 export interface Plan { key: PlanKey; title: string; orderName: string; price: number; original?: number; badge?: string; desc: string; cta: string }
 export const PLANS: Plan[] = [
   {
-    key: "single", title: "선택 고민 정밀 단품 해금권", orderName: "운세로그 정밀 단품 해금권", price: 8900,
-    desc: "선택한 1개 고민의 잠긴 인라인 키워드(결정적 달·귀인 성씨·물상·격국) 즉시 확인",
+    key: "single", title: "선택 테마 정밀 단품 해금권", orderName: "운세로그 정밀 단품 해금권", price: 8900,
+    desc: "재물·사업 / 직장·커리어 / 연애·인연 / 액운·삼재 중 1개 테마의 잠긴 키워드(결정적 달·귀인 성씨·물상·격국) 즉시 확인",
     cta: "8,900원 단품 결제하기",
   },
   {
     key: "full", title: "👑 2026-2027 VIP 종합 비책 풀패키지", orderName: "운세로그 VIP 종합 비책 풀패키지", price: 14900, original: 29900, badge: "BEST",
-    desc: "모든 고민 키워드 + 24개월 타임라인 황금의 달/손재수의 달 + 귀인 성씨 초성 등 7대 비책 완전 해금",
+    desc: "4개 테마 전체 키워드 + 24개월 타임라인 황금의 달/손재수의 달 + 귀인 성씨 초성 등 7대 비책 완전 해금",
     cta: "14,900원 얼리버드 결제하기",
   },
 ];

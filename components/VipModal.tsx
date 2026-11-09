@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Lock, Check, Sparkles, Crown, Unlock, CreditCard, ShieldCheck, Loader2 } from "lucide-react";
 import type { PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
-import type { ConcernKey } from "@/lib/saju";
+import { CONCERNS, type ConcernKey } from "@/lib/saju";
 import { PLANS, PlanKey, UnlockState, planOf, won, savePendingOrder } from "@/lib/unlock";
 import { SITE_NAME } from "@/lib/site";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** 선택한 고민 라벨 (예: 재회·인연) */
+  /** 결과 화면에서 보고 있는 테마 라벨 (예: 연애·인연) */
   themeLabel: string;
-  /** 선택한 고민 키 — 단품 해금권 적용 범위 */
+  /** 결과 화면에서 보고 있는 테마 키 — 단품 해금 테마의 기본값 */
   concern: ConcernKey;
   /** 결제 후 결과 화면 복귀용 쿼리 (encodeInput) */
   returnQuery: string;
@@ -27,7 +27,7 @@ interface Props {
 /** 해금 시 열리는 7가지 VIP 비책 */
 const VIP_ITEMS = [
   "🔒 24개월 타임라인 중 황금의 달 & 절대 조심 손재수의 달 즉시 확인",
-  "고민별 결정적 월(月) — 연락·서명·집행·갈무리의 운기 최정점 시기",
+  "테마별 결정적 월(月) — 연락·서명·집행·갈무리의 운기 최정점 시기",
   "비전 간명식 — 용신·희신 소리오행으로 산출한 귀인 성씨 초성 2종",
   "천을귀인 띠 · 피해야 할 성씨 · 동업자/담당자 인연 판별",
   "삼재·관살·손재수를 무력화하는 보완 오행 · 비책 물상(物象)",
@@ -51,6 +51,8 @@ function VipModalBody({ onClose, themeLabel, concern, returnQuery, lockHint, loc
   const ownsSingle = owned?.plan === "single";
   const [planKey, setPlanKey] = useState<PlanKey>("full");
   const plan = planOf(planKey) ?? PLANS[1];
+  /** 단품 해금권을 적용할 테마 — 폼의 2차 심층 질문 4개 테마와 동일한 목록 */
+  const [singleConcern, setSingleConcern] = useState<ConcernKey>(concern);
   const [widgetStatus, setWidgetStatus] = useState<WidgetStatus>("loading");
   const [agreed, setAgreed] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -100,9 +102,14 @@ function VipModalBody({ onClose, themeLabel, concern, returnQuery, lockHint, loc
     setError(null);
     setPaying(true);
     const orderId = `UL-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    savePendingOrder({ orderId, plan: plan.key, amount: plan.price, concern, returnQuery, createdAt: Date.now() });
+    // 단품은 고른 테마에만 적용되므로, 결제 후 그 테마의 결과 화면으로 돌아가도록 복귀 쿼리의 테마(q)를 맞춘다
+    const target = plan.key === "single" ? singleConcern : concern;
+    const back = new URLSearchParams(returnQuery);
+    back.set("q", target);
+    const backQuery = back.toString();
+    savePendingOrder({ orderId, plan: plan.key, amount: plan.price, concern: target, returnQuery: backQuery, createdAt: Date.now() });
     const origin = window.location.origin;
-    const ctx = `plan=${plan.key}&c=${encodeURIComponent(concern)}&r=${encodeURIComponent(returnQuery)}`;
+    const ctx = `plan=${plan.key}&c=${encodeURIComponent(target)}&r=${encodeURIComponent(backQuery)}`;
     try {
       await widget.requestPayment({
         orderId,
@@ -166,37 +173,64 @@ function VipModalBody({ onClose, themeLabel, concern, returnQuery, lockHint, loc
             const active = pl.key === planKey;
             const disabled = ownsSingle && pl.key === "single";
             return (
-              <button
-                key={pl.key}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                disabled={disabled || paying}
-                onClick={() => setPlanKey(pl.key)}
-                className={`relative w-full rounded-xl border p-3.5 text-left transition disabled:opacity-50 ${
-                  active ? "border-gold bg-gold/15 shadow-[inset_0_0_14px_rgba(229,184,105,.18)]" : "border-gold-2/25 bg-ink/50 hover:border-gold-2/60"
-                }`}
-              >
-                {pl.badge && (
-                  <span className="absolute -top-2.5 right-3 rounded-full bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-on-gold shadow">{pl.badge}</span>
-                )}
-                <div className="flex items-start gap-2.5">
-                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-gold bg-gold" : "border-fg/35"}`}>
-                    {active && <Check size={11} className="text-on-gold" strokeWidth={3} />}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-baseline justify-between gap-x-2">
-                      <span className={`text-sm font-bold ${active ? "text-gold-light" : "text-fg/85"}`}><span className="mr-1 text-[11px] text-gold-2">옵션 {i + 1}</span>{pl.title}</span>
-                      <span className="flex items-baseline gap-1.5">
-                        {pl.original && <span className="text-[11px] text-fg/45 line-through">정가 {won(pl.original)}</span>}
-                        <span className={`text-lg font-black ${active ? "text-gold-light" : "text-fg/85"}`}>{won(pl.price)}</span>
-                        {pl.original && <span className="rounded-full bg-[#C2413B] px-1.5 py-0.5 text-[10px] font-bold text-white">{Math.round((1 - pl.price / pl.original) * 100)}% 할인</span>}
-                      </span>
+              <div key={pl.key}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  disabled={disabled || paying}
+                  onClick={() => setPlanKey(pl.key)}
+                  className={`relative w-full rounded-xl border p-3.5 text-left transition disabled:opacity-50 ${
+                    active ? "border-gold bg-gold/15 shadow-[inset_0_0_14px_rgba(229,184,105,.18)]" : "border-gold-2/25 bg-ink/50 hover:border-gold-2/60"
+                  }`}
+                >
+                  {pl.badge && (
+                    <span className="absolute -top-2.5 right-3 rounded-full bg-gradient-to-r from-gold-2 via-gold to-gold-2 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-on-gold shadow">{pl.badge}</span>
+                  )}
+                  <div className="flex items-start gap-2.5">
+                    <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${active ? "border-gold bg-gold" : "border-fg/35"}`}>
+                      {active && <Check size={11} className="text-on-gold" strokeWidth={3} />}
                     </span>
-                    <span className="mt-1 block text-[12px] leading-snug text-fg/60">{disabled ? "이미 보유 중인 해금권입니다. 풀패키지로 업그레이드할 수 있습니다." : pl.desc}</span>
-                  </span>
-                </div>
-              </button>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                        <span className={`text-sm font-bold ${active ? "text-gold-light" : "text-fg/85"}`}><span className="mr-1 text-[11px] text-gold-2">옵션 {i + 1}</span>{pl.title}</span>
+                        <span className="flex items-baseline gap-1.5">
+                          {pl.original && <span className="text-[11px] text-fg/45 line-through">정가 {won(pl.original)}</span>}
+                          <span className={`text-lg font-black ${active ? "text-gold-light" : "text-fg/85"}`}>{won(pl.price)}</span>
+                          {pl.original && <span className="rounded-full bg-[#C2413B] px-1.5 py-0.5 text-[10px] font-bold text-white">{Math.round((1 - pl.price / pl.original) * 100)}% 할인</span>}
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-[12px] leading-snug text-fg/60">{disabled ? "이미 보유 중인 해금권입니다. 풀패키지로 업그레이드할 수 있습니다." : pl.desc}</span>
+                    </span>
+                  </div>
+                </button>
+                {pl.key === "single" && active && !disabled && (
+                  <div role="group" aria-label="단품 해금 테마 선택" className="mt-2 rounded-xl border border-gold-2/25 bg-ink/40 p-2.5">
+                    <p className="mb-2 break-keep text-[11px] text-fg/55">해금할 테마 1개를 고르세요 <span className="text-fg/40">(결제 후 해당 테마 결과로 이동)</span></p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {CONCERNS.map((c) => {
+                        const on = c.key === singleConcern;
+                        return (
+                          <button
+                            key={c.key}
+                            type="button"
+                            aria-pressed={on}
+                            disabled={paying}
+                            onClick={() => setSingleConcern(c.key)}
+                            className={`flex items-center gap-1.5 rounded-lg border px-2 py-2 text-left text-[12px] font-semibold leading-tight transition ${
+                              on ? "border-gold bg-gold/15 text-gold-light" : "border-gold-2/25 bg-ink/50 text-fg/70 hover:border-gold-2/60"
+                            }`}
+                          >
+                            <span className="leading-none" aria-hidden="true">{c.emoji}</span>
+                            <span className="min-w-0 flex-1 break-keep">{c.short}</span>
+                            {on && <Check size={12} className="shrink-0 text-gold" strokeWidth={3} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

@@ -5,17 +5,17 @@ import type { ConcernKey } from "@/lib/saju";
 
 export interface QuickCard { concern: ConcernKey; emoji: string; title: string; desc: string }
 
-/** 홈 히어로 아래 4대 핵심 고민 질문형 카드 — 클릭 시 폼의 고민 칩이 선택되고 폼으로 스크롤됩니다. */
+/** 홈 히어로 아래 4대 테마 질문형 카드 — 폼의 2차 심층 질문 4개 테마와 1:1. 클릭 시 테마 카드가 선택되고 폼으로 스크롤됩니다. */
 export const QUICK_CARDS: QuickCard[] = [
-  { concern: "reunion", emoji: "💔", title: "다시 이어질 인연일까?", desc: "재회 타이밍 · 상대 마음이 움직이는 달" },
-  { concern: "debt", emoji: "💸", title: "내 돈은 어디서 터질까?", desc: "새는 돈 차단 · 손재수의 달 · 발복 업종" },
+  { concern: "love", emoji: "💔", title: "다시 이어질 인연일까?", desc: "인연이 움직이는 달 · 도화가 서는 달" },
+  { concern: "shield", emoji: "💸", title: "내 돈은 어디서 새고 있을까?", desc: "손재수의 달 · 겁살·재살의 달 · 액막이 물상" },
   { concern: "career", emoji: "💼", title: "이직·퇴사, 지금 움직여도 될까?", desc: "계약서 서명 길일 · 귀인 성씨" },
-  { concern: "prime", emoji: "👑", title: "2027 정미년, 내 전성기는 언제인가?", desc: "대운 흐름 · 24개월 타임라인" },
+  { concern: "wealth", emoji: "💰", title: "사업·투자, 지금 시작해도 될까?", desc: "편재가 터지는 달 · 동업자 성씨" },
 ];
 
 export default function QuickCards({ active, onPick }: { active: ConcernKey | null; onPick: (c: ConcernKey) => void }) {
   return (
-    <section aria-label="핵심 고민 바로 선택" className="animate-rise delay-3 mb-6">
+    <section aria-label="핵심 테마 바로 선택" className="animate-rise delay-3 mb-6">
       <p className="mb-3 break-keep text-center text-[11px] tracking-[0.3em] text-gold-2">지금 가장 풀리지 않는 질문 하나를 고르세요</p>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {QUICK_CARDS.map((c) => {

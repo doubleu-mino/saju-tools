@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Unlock, AlertTriangle, Loader2, ChevronRight } from "lucide-react";
-import type { ConcernKey } from "@/lib/saju";
-import { CONCERNS } from "@/lib/saju";
+import { normalizeConcern } from "@/lib/saju";
 import { planOf, won, saveUnlock, readPendingOrder, clearPendingOrder, type Plan } from "@/lib/unlock";
 
 type State =
@@ -36,7 +35,7 @@ function resolveFromUrl(): State {
     const orderId = p.get("orderId") ?? "";
     const paymentKey = p.get("paymentKey") ?? "";
     const amount = Number(p.get("amount"));
-    const concern = (CONCERNS.find((c) => c.key === p.get("c"))?.key ?? undefined) as ConcernKey | undefined;
+    const concern = normalizeConcern(p.get("c")) ?? undefined;
     const returnQuery = p.get("r") ?? "";
     const returnHref = returnQuery ? `/?${returnQuery}` : "/";
 
@@ -50,7 +49,7 @@ function resolveFromUrl(): State {
     if (pending && pending.orderId !== orderId) {
       return { kind: "bad", reason: "주문번호가 결제 요청과 일치하지 않습니다.", returnHref };
     }
-    saveUnlock({ plan: plan.key, timestamp: Date.now(), orderId, concern: plan.key === "single" ? (pending?.concern ?? concern) : undefined });
+    saveUnlock({ plan: plan.key, timestamp: Date.now(), orderId, concern: plan.key === "single" ? (normalizeConcern(pending?.concern) ?? concern) : undefined });
     clearPendingOrder();
     return { kind: "ok", plan, orderId, paymentKey, returnHref };
 }

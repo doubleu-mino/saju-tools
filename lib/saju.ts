@@ -141,27 +141,29 @@ export const THEMES: { key: ThemeKey; emoji: string; label: string; short: strin
 /** 결과 화면 하단 테마 탭 (인생 총운은 무료로 전체 공개되므로 제외) */
 export const REPORT_THEMES = THEMES.filter((t): t is typeof t & { key: ReportThemeKey } => t.key !== "life");
 
-/* ───────────────────────── 2차 심층 질문 (고민 · 절대 기운) ───────────────────────── */
+/* ───────────────────────── 2차 심층 질문 (4대 운 테마 · 2x2) ───────────────────────── */
 
-export type ConcernKey = "reunion" | "career" | "debt" | "business" | "prime";
-export type WishKey = "wealth" | "power" | "charm" | "shield";
+/** 2차 심층 질문 테마 — 폼 선택지 · 결과 PART 5 · 단품 해금권 적용 범위가 모두 이 키를 공유합니다. */
+export type ConcernKey = "wealth" | "career" | "love" | "shield";
 
 export interface ChoiceMeta<K extends string> { key: K; emoji: string; label: string; short: string; hint: string }
 
 export const CONCERNS: ChoiceMeta<ConcernKey>[] = [
-  { key: "reunion", emoji: "💔", label: "이별 후 재회/인연의 타이밍", short: "재회·인연", hint: "연락이 오는 달 · 재회 통로 · 당일 소품" },
-  { key: "career", emoji: "💼", label: "이직·퇴사 및 조직 갈등", short: "이직·조직", hint: "서명해도 되는 달 · 끌어주는 귀인 · 면접 색" },
-  { key: "debt", emoji: "💸", label: "밑 빠진 독처럼 새는 재물·빚", short: "새는 재물", hint: "손재수의 달 · 돈줄 트이는 달 · 탈재 차단 물상" },
-  { key: "business", emoji: "🚀", label: "독립 사업·스타트업·신규 투자", short: "사업·투자", hint: "격국 · 사기수 달 · 동업자 성씨 · 방위" },
-  { key: "prime", emoji: "📜", label: "인생의 전성기 대운 시기", short: "전성기 대운", hint: "전성기 대운 나이 · 황금의 달 · 평생 물상" },
+  { key: "wealth", emoji: "💰", label: "재물 · 사업운", short: "재물·사업", hint: "일확천금 편재와 독립 사업, 신규 투자 타이밍" },
+  { key: "career", emoji: "💼", label: "직장 · 커리어운", short: "직장·커리어", hint: "권력과 승진, 이직과 시험·합격의 때" },
+  { key: "love", emoji: "🌸", label: "연애 · 인연운", short: "연애·인연", hint: "도화가 서는 달과 귀인 성씨, 인연의 흐름" },
+  { key: "shield", emoji: "🛡️", label: "액운 · 삼재 소멸운", short: "액운·삼재", hint: "겁살·재살의 달과 손재수, 액막이 물상" },
 ];
 
-export const WISHES: ChoiceMeta<WishKey>[] = [
-  { key: "wealth", emoji: "💰", label: "일확천금 편재운", short: "편재운", hint: "편재 폭발 월 · 금고 물상" },
-  { key: "power", emoji: "👑", label: "권력·승진 정관운", short: "정관운", hint: "사령의 달 · 인장 물상" },
-  { key: "charm", emoji: "🌸", label: "도화·인기·매력운", short: "도화운", hint: "도화가 서는 달 · 시선을 끄는 색" },
-  { key: "shield", emoji: "🛡️", label: "액운·삼재 소멸운", short: "액운 소멸", hint: "겁살·재살의 달 · 액막이 물상" },
-];
+/** 개편 이전(고민 5종 · 절대 기운 4종) 키 → 현재 4대 테마. 예전 공유 링크·해금 기록 호환용 */
+const LEGACY_CONCERN: Record<string, ConcernKey> = {
+  reunion: "love", charm: "love", business: "wealth", prime: "wealth", power: "career", debt: "shield",
+};
+/** 임의의 값(쿼리·localStorage)을 현재 테마 키로 정규화. 알 수 없는 값이면 null */
+export function normalizeConcern(v: unknown): ConcernKey | null {
+  if (typeof v !== "string") return null;
+  return CONCERNS.find((c) => c.key === v)?.key ?? LEGACY_CONCERN[v] ?? null;
+}
 
 export const YEAR_MIN = 1940;
 export const YEAR_MAX = 2026;
@@ -177,10 +179,8 @@ export interface SajuInput {
   hourBranch: number | null;
   region: RegionKey;
   theme: ThemeKey;
-  /** 현재 가장 풀리지 않는 고민 (2차 심층 질문) */
+  /** 2차 심층 질문에서 고른 운 테마 */
   concern: ConcernKey;
-  /** 끌어당기고 싶은 절대 기운 (2차 심층 질문) */
-  wish: WishKey;
 }
 
 /* ───────────────────────── 시간 보정 데이터 ───────────────────────── */
@@ -624,7 +624,7 @@ export function encodeInput(i: SajuInput): string {
   p.set("y", String(i.year)); p.set("m", String(i.month)); p.set("d", String(i.day));
   p.set("h", i.hourBranch === null ? "x" : String(i.hourBranch));
   p.set("r", i.region); p.set("t", i.theme);
-  p.set("q", i.concern); p.set("w", i.wish);
+  p.set("q", i.concern);
   return p.toString();
 }
 
@@ -641,8 +641,7 @@ export function decodeInput(search: string): SajuInput | null {
     hourBranch: h === "x" || h === null ? null : Math.min(11, Math.max(0, Number(h))),
     region: (REGIONS.find((r) => r.key === p.get("r"))?.key ?? "seoul") as RegionKey,
     theme: (THEMES.find((t) => t.key === p.get("t"))?.key ?? "life") as ThemeKey,
-    concern: (CONCERNS.find((c) => c.key === p.get("q"))?.key ?? "reunion") as ConcernKey,
-    wish: (WISHES.find((w) => w.key === p.get("w"))?.key ?? "wealth") as WishKey,
+    concern: normalizeConcern(p.get("q")) ?? "wealth",
   };
   if ([input.year, input.month, input.day].some((n) => !Number.isFinite(n))) return null;
   return input;

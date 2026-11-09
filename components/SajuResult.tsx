@@ -72,7 +72,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
   const cur = currentDaeun(r);
   const displayPillars = [...r.pillars].reverse(); // 시·일·월·연 (전통 표기 순)
 
-  // 정밀 리포트 (고민·절대 기운 × 2026·2027 세운 × 12신살)
+  // 정밀 리포트 (선택 테마 × 2026·2027 세운 × 12신살)
   const pin = useMemo(() => buildPinpoint(r), [r]);
   const y26 = useMemo(() => yearGodSummary(r, 2026), [r]);
   const y27 = useMemo(() => yearGodSummary(r, 2027), [r]);
@@ -293,11 +293,11 @@ export default function SajuResult({ result: r, onReset }: Props) {
         </div>
       </Section>
 
-      {/* PART 5 — 선택한 고민 심층 타겟 리포트 (인라인 키워드 락) */}
+      {/* PART 5 — 선택한 테마(재물·사업 / 직장·커리어 / 연애·인연 / 액운·삼재) 정밀 간명 (인라인 키워드 락) */}
       <Section no="05" title={`${pin.concern.emoji} ${pin.concernTitle}`} sub={pin.concernSummary}>
         {/* 세운 뱃지 */}
         <div className="mb-5 flex flex-wrap items-center gap-2 text-[11px] [&>span]:whitespace-nowrap">
-          <span className="inline-flex items-center gap-1 rounded-full border border-gold/50 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Target size={11} /> 선택한 고민 · {pin.concern.short}</span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-gold/50 bg-gold/15 px-2.5 py-1 font-semibold text-gold-light"><Target size={11} /> 선택한 테마 · {pin.concern.short}</span>
           <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">2026 {y26.ko}({y26.ganzhi}) · {y26.stemGod}/{y26.branchGod}</span>
           <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">2027 {y27.ko}({y27.ganzhi}) · {y27.stemGod}/{y27.branchGod}</span>
           <span className="rounded-full border border-gold-2/30 bg-ink/60 px-2.5 py-1 text-fg/75">용신 {pin.benefactor.yong}({ELEMENT_HANJA[pin.benefactor.yong]}) · 희신 {pin.benefactor.hui}({ELEMENT_HANJA[pin.benefactor.hui]})</span>
@@ -314,10 +314,10 @@ export default function SajuResult({ result: r, onReset }: Props) {
           ))}
         </div>
 
-        {/* 절대 기운 */}
+        {/* 테마별 핵심 기운 */}
         <div className="mt-7 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
-          <p className="flex items-center gap-1.5 text-[11px] tracking-[0.3em] text-gold-2"><Flame size={12} /> 끌어당기고 싶은 절대 기운 · {pin.wish.short}</p>
-          {pin.wishParas.map((para) => (
+          <p className="flex items-center gap-1.5 text-[11px] tracking-[0.3em] text-gold-2"><Flame size={12} /> {pin.concern.short} 핵심 기운 · {pin.focusLabel}</p>
+          {pin.focusParas.map((para) => (
             <div key={para.heading} className="mt-3">
               <h4 className="break-keep font-bold text-gold-light">{para.heading}</h4>
               <p className="mt-1.5 text-[15px] leading-[2.05] text-fg/85 break-keep">
@@ -377,7 +377,7 @@ export default function SajuResult({ result: r, onReset }: Props) {
         )}
         {unlock?.plan === "single" && !scope.inline && (
           <p className="mt-3 rounded-lg border border-gold-2/30 bg-gold/5 px-3 py-2 text-[12px] leading-relaxed text-fg/65 break-keep">
-            보유하신 단품 해금권은 구매 당시 선택한 고민에만 적용됩니다. 다른 고민의 키워드는 풀패키지로 열 수 있습니다.
+            보유하신 단품 해금권은 구매 당시 선택한 테마에만 적용됩니다. 나머지 테마의 키워드는 풀패키지로 열 수 있습니다.
           </p>
         )}
         <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-fg/40 break-keep"><ShieldAlert size={12} className="mt-0.5 shrink-0" /> 월운은 절입일(매월 4~8일) 기준 월건으로 산출되며, 달력 월과 수일의 차이가 있을 수 있습니다. {scope.inline ? "해금된 값은 전통 명리학 이론에 따른 참고 자료입니다." : "자물쇠 항목은 VIP 간명 해금 시 공개됩니다."}</p>

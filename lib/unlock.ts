@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { ConcernKey } from "./saju";
+import { normalizeConcern, type ConcernKey } from "./saju";
 
 export { PLANS, planOf, won } from "./plans";
 export type { PlanKey, Plan } from "./plans";
@@ -15,7 +15,7 @@ export interface UnlockState {
   plan: PlanKey;
   timestamp: number;
   orderId?: string;
-  /** 단품 해금권은 구매 당시 선택한 고민에만 적용 */
+  /** 단품 해금권은 구매 당시 선택한 테마 1개에만 적용 */
   concern?: ConcernKey;
 }
 export interface PendingOrder {
@@ -37,7 +37,7 @@ export function readUnlock(): UnlockState | null {
     if (!raw) return null;
     const v = JSON.parse(raw) as Partial<UnlockState>;
     if (v.plan !== "single" && v.plan !== "full") return null;
-    return { plan: v.plan, timestamp: Number(v.timestamp) || Date.now(), orderId: v.orderId, concern: v.concern };
+    return { plan: v.plan, timestamp: Number(v.timestamp) || Date.now(), orderId: v.orderId, concern: normalizeConcern(v.concern) ?? undefined };
   } catch { return null; }
 }
 
@@ -91,7 +91,7 @@ export function useUnlock(): UnlockState | null {
 
 /** 해금 범위 판정 */
 export interface UnlockScope {
-  /** PART 5 인라인 락 (선택 고민 키워드·귀인 성씨·물상·격국) */
+  /** PART 5 인라인 락 (선택 테마 키워드·귀인 성씨·물상·격국) */
   inline: boolean;
   /** PART 6 타임라인 황금의 달·손재수의 달 */
   timeline: boolean;

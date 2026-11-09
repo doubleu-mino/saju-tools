@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Sparkles, User, Clock, MapPin, CalendarDays, Info, Target, Flame, CheckCircle2, Lock } from "lucide-react";
+import { Sparkles, User, Clock, MapPin, CalendarDays, Info, Target, CheckCircle2, Lock } from "lucide-react";
 import {
-  SajuInput, HOUR_SLOTS, REGIONS, YEAR_MIN, YEAR_MAX, CalendarType, Gender, RegionKey, ConcernKey, WishKey, CONCERNS, WISHES,
+  SajuInput, HOUR_SLOTS, REGIONS, YEAR_MIN, YEAR_MAX, CalendarType, Gender, RegionKey, ConcernKey, CONCERNS,
   validateInput, leapMonthOf, lunarMonthDays, isDst, isUtc830Era,
 } from "@/lib/saju";
 
 interface Props {
   initial?: SajuInput | null;
-  /** 홈 퀵 카드에서 고른 고민 — 바뀔 때마다 고민 칩을 즉시 선택 */
+  /** 홈 퀵 카드에서 고른 테마 — 바뀔 때마다 테마 카드를 즉시 선택 */
   presetConcern?: ConcernKey | null;
   onSubmit: (input: SajuInput) => void;
 }
@@ -27,7 +27,6 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
   const [hour, setHour] = useState<string>(initial ? (initial.hourBranch === null ? "x" : String(initial.hourBranch)) : "x");
   const [region, setRegion] = useState<RegionKey>(initial?.region ?? "seoul");
   const [concern, setConcern] = useState<ConcernKey | null>(presetConcern ?? initial?.concern ?? null);
-  const [wish, setWish] = useState<WishKey | null>(initial?.wish ?? null);
   const [error, setError] = useState<string | null>(null);
 
   // 퀵 카드 선택이 바뀌면 렌더 중에 파생 상태로 반영 (effect 없이)
@@ -63,14 +62,12 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
     hourBranch: hour === "x" ? null : Number(hour),
     region,
     theme: "life",
-    concern: concern ?? "reunion",
-    wish: wish ?? "wealth",
+    concern: concern ?? "wealth",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!concern) { setError("현재 가장 풀리지 않는 고민을 하나 선택해 주세요. 선택한 고민에 맞춰 결정적 '달'을 정밀하게 산출합니다."); return; }
-    if (!wish) { setError("끌어당기고 싶은 절대 기운을 하나 선택해 주세요."); return; }
+    if (!concern) { setError("가장 풀고 싶은 운의 테마를 하나 선택해 주세요. 선택한 테마에 맞춰 결정적 '달'을 정밀하게 산출합니다."); return; }
     const input = build();
     const err = validateInput(input);
     if (err) { setError(err); return; }
@@ -173,47 +170,29 @@ export default function SajuForm({ initial, presetConcern = null, onSubmit }: Pr
       </div>
 
 
-      {/* ───── 2차 심층 질문 ───── */}
-      <div className="mt-7 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
+      {/* ───── 2차 심층 질문 (4대 운 테마 · 2x2) ───── */}
+      <div className="mt-7 rounded-2xl border border-gold/30 bg-gold/5 p-3 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="flex items-center gap-1.5 whitespace-nowrap text-[11px] tracking-[0.3em] text-gold-2"><Target size={13} /> 2차 심층 질문 · 정밀 간명</p>
           <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold"><Lock size={10} /> VIP 간명 기초 데이터</span>
         </div>
         <p className="mt-1.5 break-keep text-pretty text-xs leading-relaxed text-fg/55">
-          선택한 고민과 기운에 맞춰 2026 丙午·2027 丁未 세운과 12신살을 교차해 <b className="text-gold-light">결정적 달(月)·귀인 성씨·비책 물상</b>을 산출합니다.
+          선택한 테마에 맞춰 2026 丙午·2027 丁未 세운과 12신살을 교차해 <b className="text-gold-light">결정적 달(月)·귀인 성씨·비책 물상</b>을 산출합니다.
         </p>
 
         <div className="mt-4">
-          <span className="mb-2 block text-xs tracking-wider text-gold-2">1. 현재 가장 풀리지 않는 고민 <span className="text-fg/40">(택1)</span></span>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <span id="concern-label" className="mb-2 block text-xs tracking-wider text-gold-2">지금 가장 풀고 싶은 운(運)의 테마 <span className="text-fg/40">(택1)</span></span>
+          <div role="group" aria-labelledby="concern-label" className="grid auto-rows-fr grid-cols-2 gap-2 sm:gap-3">
             {CONCERNS.map((c) => (
-              <button key={c.key} type="button" aria-pressed={concern === c.key} className={`chip ${concern === c.key ? "is-active" : ""}`} onClick={() => { setConcern(c.key); if (error) setError(null); }}>
-                <span className="text-base leading-none">{c.emoji}</span>
-                <span className="min-w-0 flex-1 break-keep">
-                  <span className="block font-semibold">{c.label}</span>
-                  <span className="block text-[11px] leading-snug text-fg/45">
-                    {c.hint.split(" · ").map((part, i) => <span key={part} className="inline-block">{i > 0 && <span className="mx-1 text-fg/30">·</span>}{part}</span>)}
+              <button key={c.key} type="button" aria-pressed={concern === c.key} className={`chip theme-chip ${concern === c.key ? "is-active" : ""}`} onClick={() => { setConcern(c.key); if (error) setError(null); }}>
+                <span className="theme-chip__emoji" aria-hidden="true">{c.emoji}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="theme-chip__label">
+                    {c.label.split(" · ").map((part, i) => <span key={part}>{i > 0 && <span className="mx-0.5 text-gold-2/70">·</span>}{part}</span>)}
                   </span>
+                  <span className="theme-chip__hint">{c.hint}</span>
                 </span>
-                <CheckCircle2 size={16} className="chip__check" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <span className="mb-2 flex items-center gap-1 text-xs tracking-wider text-gold-2"><Flame size={12} /> 2. 끌어당기고 싶은 절대 기운 <span className="text-fg/40">(택1)</span></span>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {WISHES.map((w) => (
-              <button key={w.key} type="button" aria-pressed={wish === w.key} className={`chip relative ${wish === w.key ? "is-active" : ""} !flex-col !items-start !gap-1 !px-2 sm:!px-3`} onClick={() => { setWish(w.key); if (error) setError(null); }}>
-                <span className="flex w-full items-center gap-1 sm:gap-1.5">
-                  <span className="text-base leading-none">{w.emoji}</span>
-                  <span className="whitespace-nowrap break-keep text-xs font-semibold md:text-sm">{w.label}</span>
-                </span>
-                <span className="break-keep pr-4 text-[11px] leading-snug text-fg/45">
-                  {w.hint.split(" · ").map((part) => <span key={part} className="block">{part}</span>)}
-                </span>
-                <CheckCircle2 size={14} className="chip__check !absolute bottom-2.5 right-2 !m-0" />
+                <CheckCircle2 size={16} className="chip__check theme-chip__check" />
               </button>
             ))}
           </div>

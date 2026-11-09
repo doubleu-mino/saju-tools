@@ -1,6 +1,6 @@
 /**
  * 정밀 예측 엔진 — 일간·일지·연지 × 2026 丙午 / 2027 丁未 세운 × 월건(月建) × 12신살 × 육친
- * - 고민별 결정적 '월(月)' 산출
+ * - 4대 운 테마(재물·사업 / 직장·커리어 / 연애·인연 / 액운·삼재)별 결정적 '월(月)' 산출
  * - 재벌가 비전 간명식: 귀인 성씨 초성(소리오행) · 천을귀인 띠
  * - 삼재·관살·손재수 무력화 보완 오행 및 비책 물상(物象)
  * - 12개월 운세 타임라인 (황금의 달 1곳 · 손재수의 달 1곳 잠금)
@@ -12,9 +12,9 @@ import {
   BRANCH_ELEMENT, BRANCH_MAIN_STEM, BRANCHES, BRANCHES_KO, BRANCH_ANIMAL, yinYangOf,
   sixHarmonyOf, clashOf, trineGroupOf, TRINE_LABEL, shinsalOf, Shinsal, dohwaBranchOf, geopsalBranchOf, jaesalBranchOf,
   samjaeStage, SamjaeStage, CHEONEUL_BRANCHES, stemsCombine, yearGanzhi, monthGanzhi, monthOfBranch, Ganzhi,
-  CONCERNS, WISHES, ConcernKey, WishKey, ChoiceMeta, DaeunItem,
+  CONCERNS, ConcernKey, ChoiceMeta,
 } from "./saju";
-import { remedyElementFor, currentDaeun } from "./interpretations";
+import { remedyElementFor } from "./interpretations";
 
 /* ───────────────────────── 잠금 토큰 ───────────────────────── */
 
@@ -28,7 +28,7 @@ const HINT: Record<LockKind, string> = {
 };
 export const isLock = (s: Segment): s is LockToken => typeof s !== "string";
 const L = (kind: LockKind, value: string, hint?: string): LockToken => ({ lock: true, kind, hint: hint ?? HINT[kind], value });
-const Lm = (month: number, year?: number) => L("month", `${year ? `${year}년 ` : ""}${month}월`);
+const Lm = (month: number) => L("month", `${month}월`);
 
 /** 태그 템플릿: 문자열과 LockToken 을 Segment[] 로 엮는다 */
 type PValue = string | number | LockToken | Segment[];
@@ -61,7 +61,7 @@ const ELEMENT_SURNAMES: Record<Element, string> = {
 };
 const ELEMENT_COLOR_KO: Record<Element, string> = { 목: "청록·초록", 화: "진홍·주황", 토: "황토·금황", 금: "백은·화이트", 수: "먹색·네이비" };
 const ELEMENT_DIRECTION: Record<Element, string> = { 목: "동쪽", 화: "남쪽", 토: "남서쪽", 금: "서쪽", 수: "북쪽" };
-/** 비책 물상(物象) — 고민 결에 따라 변주 */
+/** 비책 물상(物象) — 테마 결에 따라 변주 */
 const ELEMENT_ITEM: Record<Element, { base: string; money: string; love: string; shield: string; seal: string }> = {
   목: { base: "원목 108염주", money: "동쪽 창가의 산세베리아 화분", love: "초록 비취(翡翠) 귀걸이", shield: "복숭아나무 가지 매듭", seal: "대추나무 인장" },
   화: { base: "붉은 실 삼매듭 팔찌", money: "남향 히말라야 소금 램프", love: "석류석(가넷) 펜던트", shield: "주사(朱砂) 붉은 주머니", seal: "홍옥(紅玉) 도장" },
@@ -72,7 +72,8 @@ const ELEMENT_ITEM: Record<Element, { base: string; money: string; love: string;
 
 /* ───────────────────────── 월운 점수 ───────────────────────── */
 
-type Mode = "general" | "loss" | ConcernKey | WishKey;
+/** 월운 채점 모드 — 테마 하나가 여러 모드를 조합해 씁니다 (예: 재물·사업 = business + wealth) */
+type Mode = "general" | "loss" | "reunion" | "career" | "debt" | "business" | "wealth" | "power" | "charm" | "shield";
 type Weights = Partial<Record<TenGod, number>>;
 
 const BASE_SHINSAL: Record<Shinsal, number> = {
@@ -83,7 +84,6 @@ const SHINSAL_BONUS: Partial<Record<Mode, Partial<Record<Shinsal, number>>>> = {
   career: { 역마살: 2.5, 장성살: 2, 반안살: 1.5 },
   debt: { 겁살: -2, 재살: -1.5, 반안살: 2 },
   business: { 역마살: 2, 지살: 1.5, 장성살: 1 },
-  prime: { 장성살: 2, 반안살: 1.5, 화개살: 1 },
   wealth: { 반안살: 2, 겁살: -2 },
   power: { 장성살: 3, 반안살: 2 },
   charm: { 년살: 4 },
@@ -99,7 +99,6 @@ function weightsFor(r: SajuResult, mode: Mode): Weights {
     case "career": return { 정관: 3, 편관: 1.5, 정인: 2, 편인: 1, 식신: 0.5, 상관: -2, 겁재: -1 };
     case "debt": return { 정재: 2.5, 편재: 1.5, 식신: 1.5, 정관: 1, 겁재: -3.5, 비견: -2, 편인: -1 };
     case "business": return { 식신: 3, 편재: 3, 상관: 1.5, 정재: 1.5, 편관: 0.5, 편인: -1.5, 겁재: -1 };
-    case "prime": return { 정관: 2, 정재: 2, 정인: 2, 식신: 2, 편재: 1.5, 편관: 0.5, 겁재: -1.5 };
     case "wealth": return { 편재: 4, 정재: 2, 식신: 2, 상관: 1, 겁재: -3, 비견: -1.5 };
     case "power": return { 정관: 4, 편관: 1.5, 정인: 2, 상관: -3, 겁재: -1 };
     case "charm": return { 식신: 2.5, 상관: 2.5, 편재: 1.5, 정재: 1, 편관: 0.5 };
@@ -264,14 +263,15 @@ function relationOf(a: number, b: number): Relation {
 
 export interface PinpointReport {
   concern: ChoiceMeta<ConcernKey>;
-  wish: ChoiceMeta<WishKey>;
+  /** 테마별 핵심 기운 (강조 박스) 라벨 */
+  focusLabel: string;
   gyeokguk: string;
   benefactor: Benefactor;
   remedy: { element: Element; color: string; item: string; direction: string };
   concernTitle: string;
   concernSummary: string;
   concernParas: Paragraph[];
-  wishParas: Paragraph[];
+  focusParas: Paragraph[];
   timelines: YearTimeline[];
   /** 잠긴 항목 총수 */
   lockCount: number;
@@ -279,7 +279,6 @@ export interface PinpointReport {
 
 export function buildPinpoint(r: SajuResult): PinpointReport {
   const concern = CONCERNS.find((c) => c.key === r.input.concern) ?? CONCERNS[0];
-  const wish = WISHES.find((w) => w.key === r.input.wish) ?? WISHES[0];
   const who = r.name ? `${r.name}님` : "당신";
   const me = r.dayMaster;
   const male = r.input.gender === "male";
@@ -294,10 +293,8 @@ export function buildPinpoint(r: SajuResult): PinpointReport {
   const rel26 = relationOf(dj.branch, y26.branch);
   const relM26 = relationOf(mj.branch, y26.branch);
   const sg26 = tenGodOf(me.stem, y26.stem), bg26 = tenGodOf(me.stem, BRANCH_MAIN_STEM[y26.branch]);
-  const sg27 = tenGodOf(me.stem, y27.stem);
   const gyeokGod = mj.branchGod;
   const gyeokguk = GYEOK_NAME[gyeokGod];
-  const cur = currentDaeun(r);
   const godCount = (g: TenGod) => r.pillars.reduce((n, p) => n + (p.stemGod === g ? 1 : 0) + (p.branchGod === g ? 1 : 0), 0);
 
   const benefactor: Benefactor = {
@@ -310,7 +307,6 @@ export function buildPinpoint(r: SajuResult): PinpointReport {
   const remedy = { element: yong, color: ELEMENT_COLOR_KO[yong], item: item.base, direction: ELEMENT_DIRECTION[yong] };
 
   const timelines = [buildTimeline(r, 2026), buildTimeline(r, 2027)];
-  const t26 = timelines[0], t27 = timelines[1];
 
   // 잠금 토큰 생성기
   const surname1 = L("surname", `${benefactor.consonants[0]} 초성 (${benefactor.surnames[0]})`);
@@ -318,13 +314,12 @@ export function buildPinpoint(r: SajuResult): PinpointReport {
   const color = L("color", remedy.color);
   const dir = L("direction", remedy.direction);
   const pattern = L("pattern", gyeokguk);
-  const gold26 = Lm(t26.golden, 2026), gold27 = Lm(t27.golden, 2027), bad26 = Lm(t26.danger, 2026);
 
   const concernParas: Paragraph[] = [];
   let concernTitle = "", concernSummary = "";
 
-  /* ── 재회/인연 ── */
-  if (concern.key === "reunion") {
+  /* ── 연애 · 인연운 ── */
+  if (concern.key === "love") {
     const spouseStar: TenGodGroup = male ? "재성" : "관성";
     const spouseEl = male ? (ELEMENTS.find((e) => overcomeBy(e) === me.element) as Element) : overcomeBy(me.element);
     const n = c[spouseStar];
@@ -336,29 +331,29 @@ export function buildPinpoint(r: SajuResult): PinpointReport {
         ? "상관(傷官)이 관성을 치는 상관견관 구조라 말로 상대를 이기려다 정작 마음을 잃는 패턴이 되풀이되었습니다."
         : male && c.비겁 >= 2
           ? "비겁이 재성을 두고 다투는 구조라 주변 사람·일·친구에게 마음이 분산되어 상대가 '우선순위가 아니다'라고 느꼈습니다."
-          : "합(合)은 살아 있으나 결정적 순간마다 서로 먼저 손 내밀기를 기다리다 거리가 벌어진 유형입니다.";
-    concernTitle = "이별 후 재회 · 인연의 타이밍 정밀 간명";
-    concernSummary = `${rel26 === "충" ? "2026년 세운이 배우자궁을 정면으로 충(沖)하는 해 — 기운이 화합하는 시기를 가려야 합니다." : rel26 === "육합" || rel26 === "삼합" ? "2026년 세운이 배우자궁과 합(合)을 이루는 해 — 끊어진 줄이 다시 묶입니다." : "2026년 감정의 온도가 서서히 돌아오는 해 — 인연의 기운이 움직이는 '달'을 아는 것이 핵심입니다."}`;
+          : "합(合)은 살아 있으나 결정적 순간마다 서로 먼저 손 내밀기를 기다리다 거리가 벌어지기 쉬운 유형입니다.";
+    concernTitle = "연애 · 인연운 정밀 간명";
+    concernSummary = `${rel26 === "충" ? "2026년 세운이 배우자궁을 정면으로 충(沖)하는 해 — 기운이 화합하는 시기를 가려야 합니다." : rel26 === "육합" || rel26 === "삼합" ? "2026년 세운이 배우자궁과 합(合)을 이루는 해 — 인연의 줄이 묶입니다." : "2026년 감정의 온도가 서서히 돌아오는 해 — 인연의 기운이 움직이는 '달'을 아는 것이 핵심입니다."}`;
     concernParas.push({
-      heading: "원국 진단 — 왜 헤어졌고, 왜 아직 끝나지 않았는가",
-      segments: P`${who}의 일간 ${me.title}에게 연인·배우자의 별은 ${spouseStar}, 곧 ${spouseEl}(${ELEMENT_HANJA[spouseEl]}) 기운입니다. 원국에 ${spouseStar}이 ${n === 0 ? "드러나지 않아 인연이 세운(歲運)을 타고 특정 달에 집중적으로 들어오는 구조이며, 평소에는 잠잠하다가 그 달에 기운이 화합합니다" : n >= 3 ? `${n}개로 넘쳐 선택지는 많았으나 한 사람에게 정착하는 힘이 약했고, 상대 역시 당신의 주변을 늘 의식했습니다` : `${n}개로 안정적이라 인연의 끈은 질긴 편입니다. 끝났다고 느끼는 지금도 두 명식의 합(合)은 아직 살아 있습니다`}. 배우자 자리인 일지(日支) ${dj.branchHanja}(${dj.branchKo})에는 ${dj.branchGod}이 앉아 있고, ${friction}`,
+      heading: "원국 진단 — 인연이 들어오는 구조와 반복되는 패턴",
+      segments: P`${who}의 일간 ${me.title}에게 연인·배우자의 별은 ${spouseStar}, 곧 ${spouseEl}(${ELEMENT_HANJA[spouseEl]}) 기운입니다. 원국에 ${spouseStar}이 ${n === 0 ? "드러나지 않아 인연이 세운(歲運)을 타고 특정 달에 집중적으로 들어오는 구조이며, 평소에는 잠잠하다가 그 달에 기운이 화합합니다" : n >= 3 ? `${n}개로 넘쳐 선택지는 많았으나 한 사람에게 정착하는 힘이 약했고, 상대 역시 당신의 주변을 늘 의식했습니다` : `${n}개로 안정적이라 인연의 끈은 질긴 편입니다. 한번 맺은 인연은 쉽게 끊어지지 않고, 멀어진 뒤에도 합(合)의 여운이 오래 남습니다`}. 배우자 자리인 일지(日支) ${dj.branchHanja}(${dj.branchKo})에는 ${dj.branchGod}이 앉아 있고, ${friction}`,
     });
     concernParas.push({
-      heading: "2026 丙午 · 2027 丁未 — 연락이 오는 달, 결말이 나는 달",
-      segments: P`2026 병오(丙午)년의 세운 午(오) 기운은 ${who}의 일지 ${dj.branchHanja} 글자와 ${rel26 === "충" ? "정면으로 충(沖)합니다. 상반기는 감정이 거칠어지는 구간이라 먼저 연락하는 것은 운기에 맞지 않습니다" : rel26 === "육합" ? "육합(六合)을 이룹니다. 끊어진 줄이 다시 묶이는 해로, 상대가 당신을 떠올리는 빈도가 급격히 늘어납니다" : rel26 === "삼합" ? "삼합(三合)으로 결속합니다. 공통 지인·모임을 통해 자연스럽게 재접촉이 일어나는 해입니다" : rel26 === "복음" ? "같은 글자로 겹치는 복음(伏吟)입니다. 과거가 그대로 반복되기 쉬우니 전과 다른 방식으로 접근해야 합니다" : "직접 부딪치지 않아 감정의 온도가 서서히 되돌아옵니다"}. 천간 丙은 ${sg26}, 지지 午는 ${bg26}으로 작용해 ${TEN_GOD_GROUP[bg26] === spouseStar ? "배우자의 별이 세운으로 직접 들어오는 해입니다" : "상대의 마음을 흔드는 간접 기운으로 작용합니다"}. 명리학 간명 기준으로 상대 쪽에서 인연의 기운이 먼저 움직이는 시점은 ${Lm(contact)}이며, 2027 정미(丁未)년 ${Lm(verdict)}에 재결합 혹은 완전한 정리, 둘 중 하나로 기운이 갈무리되는 시기입니다.`,
+      heading: "2026 丙午 · 2027 丁未 — 인연이 움직이는 달, 관계가 갈무리되는 달",
+      segments: P`2026 병오(丙午)년의 세운 午(오) 기운은 ${who}의 일지 ${dj.branchHanja} 글자와 ${rel26 === "충" ? "정면으로 충(沖)합니다. 상반기는 감정이 거칠어지는 구간이라 서두른 고백·연락은 운기에 맞지 않습니다" : rel26 === "육합" ? "육합(六合)을 이룹니다. 인연의 줄이 묶이는 해로, 새 인연이든 옛 인연이든 상대 쪽에서 먼저 다가오는 일이 잦아집니다" : rel26 === "삼합" ? "삼합(三合)으로 결속합니다. 공통 지인·모임을 통해 자연스럽게 만남이 이어지는 해입니다" : rel26 === "복음" ? "같은 글자로 겹치는 복음(伏吟)입니다. 과거가 그대로 반복되기 쉬우니 전과 다른 방식으로 접근해야 합니다" : "직접 부딪치지 않아 감정의 온도가 서서히 되돌아옵니다"}. 천간 丙은 ${sg26}, 지지 午는 ${bg26}으로 작용해 ${TEN_GOD_GROUP[bg26] === spouseStar ? "배우자의 별이 세운으로 직접 들어오는 해입니다" : "상대의 마음을 흔드는 간접 기운으로 작용합니다"}. 명리학 간명 기준으로 새 만남·연락·재회처럼 인연의 기운이 먼저 움직이는 시점은 ${Lm(contact)}이며, 2027 정미(丁未)년 ${Lm(verdict)}에 교제·결혼·재결합의 결실 혹은 완전한 정리, 둘 중 하나로 기운이 갈무리되는 시기입니다.`,
     });
     concernParas.push({
-      heading: "재회 성공률을 끌어올리는 비책 처방",
-      segments: P`원국 내 ${yong}(${ELEMENT_HANJA[yong]}) 기운의 합(合)을 극대화하여 재회 운을 성사시키는 결정적 통로는 ${surname1} 지인입니다. 직접 연락보다 이 성씨의 지인을 거쳐 근황이 닿게 하십시오. 용신 ${yong}(${ELEMENT_HANJA[yong]})의 소리오행과 같은 성씨라 당신의 뜻이 가장 온전히 전해지는 인연입니다. 재회 당일에는 ${color} 소품을 몸에 지녀 ${gisin}(${ELEMENT_HANJA[gisin]}) 기신의 살(煞)을 피하고, 약속 장소는 현재 거주지 기준 ${dir}으로 잡으면 기운이 화합하기 좋습니다.`,
+      heading: "인연을 끌어당기는 귀인 성씨와 비책 처방",
+      segments: P`원국 내 ${yong}(${ELEMENT_HANJA[yong]}) 기운의 합(合)을 극대화하여 인연 운을 성사시키는 결정적 통로는 ${surname1} 지인입니다. 소개·주선이든 재회의 다리든, 직접 나서기보다 이 성씨의 지인을 거쳐 마음이 닿게 하십시오. 용신 ${yong}(${ELEMENT_HANJA[yong]})의 소리오행과 같은 성씨라 당신의 뜻이 가장 온전히 전해지는 인연입니다. 만남 당일에는 ${color} 소품을 몸에 지녀 ${gisin}(${ELEMENT_HANJA[gisin]}) 기신의 살(煞)을 피하고, 약속 장소는 현재 거주지 기준 ${dir}으로 잡으면 기운이 화합하기 좋습니다.`,
     });
   }
 
-  /* ── 이직·퇴사·조직 갈등 ── */
+  /* ── 직장 · 커리어운 ── */
   if (concern.key === "career") {
     const sc = scoreYear(r, 2026, "career");
     const sign = best(sc).month, avoid = worst(sc, [sign]).month;
     const gwan = c.관성;
-    concernTitle = "이직·퇴사 · 조직 갈등 정밀 간명";
+    concernTitle = "직장 · 커리어운 정밀 간명";
     concernSummary = relM26 === "충" ? "2026년 세운이 직장궁(월지)을 충(沖) — 자리 자체가 흔들리는 이동수의 해입니다." : relM26 === "육합" || relM26 === "삼합" ? "2026년 세운이 직장궁과 합(合) — 현 조직 안에서 직급·조건이 재조정되는 해입니다." : "2026년은 급변보다 내부 재배치의 해 — 서명하는 '달'이 승부를 가릅니다.";
     concernParas.push({
       heading: "원국 진단 — 지금의 갈등은 성격이 아니라 구조다",
@@ -374,34 +369,37 @@ export function buildPinpoint(r: SajuResult): PinpointReport {
     });
   }
 
-  /* ── 새는 재물·빚 ── */
-  if (concern.key === "debt") {
-    const loss = scoreYear(r, 2026, "loss");
-    const open = scoreYear(r, 2026, "debt");
-    const lossM = worst(loss).month, openM = best(open, [lossM]).month;
-    const bi = c.비겁, jae = c.재성;
-    concernTitle = "밑 빠진 독 — 새는 재물·빚 정밀 간명";
-    concernSummary = bi >= 2 ? "군겁쟁재(群劫爭財) — 재성이 흩어지는 통로가 투자보다 '사람'에 있는 명식입니다." : jae === 0 ? "재성 무(無) — 돈의 흐름을 눈에 보이게 하는 것이 보완책인 명식입니다." : r.strength.label === "신약" && jae >= 2 ? "재다신약(財多身弱) — 재물보다 일간의 힘을 먼저 키워야 하는 명식입니다." : "균형은 나쁘지 않습니다 — 문제는 특정 달에 집중되는 손재의 타이밍입니다.";
+  /* ── 액운 · 삼재 소멸운 (겁살·재살 + 손재수) ── */
+  if (concern.key === "shield") {
+    const animal = BRANCH_ANIMAL[yj.branch];
+    const s26 = samjaeStage(yj.branch, y26.branch), s27 = samjaeStage(yj.branch, y27.branch);
+    const gm = monthOfBranch(geopsalBranchOf(yj.branch)), jm = monthOfBranch(jaesalBranchOf(yj.branch));
+    const lossM = worst(scoreYear(r, 2026, "loss")).month;
+    const clearM = best(scoreYear(r, 2026, "shield"), [gm, jm, lossM]).month;
+    concernTitle = "액운 · 삼재 소멸운 정밀 간명";
+    concernSummary = s26
+      ? `2026 병오년은 ${animal}띠 ${s26}(三災) — ${s26 === "들삼재" ? "액이 들어오는 첫해, 벌이기보다 지키는 쪽이 유리합니다." : s26 === "눌삼재" ? "액이 머무는 해, 건강·문서·송사를 방비해야 합니다." : "액이 나가는 해, 마무리와 정리가 곧 액막이입니다."}`
+      : "2026년은 삼재 해가 아닙니다 — 액은 '해'가 아닌 겁살·재살의 '달'에 들어옵니다.";
     concernParas.push({
-      heading: "원국 진단 — 돈이 새는 구멍의 정체",
-      segments: P`${who}의 원국에는 비겁(比劫) ${bi}개, 재성(財星) ${jae}개가 자리합니다. ${bi >= 2 ? "비겁이 재성을 두고 다투는 군겁쟁재(群劫爭財) 구조라, 당신의 돈은 투자 실패보다 동업·보증·가족·연인처럼 '사람'을 통해 새 나갑니다. 빌려주는 돈은 재성이 흩어지는 통로가 되기 쉽습니다" : jae === 0 ? "재성이 드러나지 않아 돈의 출입을 몸으로 느끼기 전에 이미 빠져나간 뒤입니다. 자동이체와 현금흐름표로 흐름을 눈에 보이게 하는 것이 보완책입니다" : r.strength.label === "신약" && jae >= 2 ? "돈은 많이 오가지만 일간이 약해 쥐면 흘리는 재다신약(財多身弱)입니다. 빚은 욕심이 아니라 체력 부족에서 오니, 몸이 지칠 때의 결제는 피하는 것이 좋습니다" : "재성과 비겁의 균형 자체는 나쁘지 않습니다. 문제는 타이밍이며, 특정 달에 집중되는 손재수의 시기를 피하는 것이 재물 보전의 핵심입니다"}. 일지 ${dj.branchHanja}의 ${dj.branchGod}은 ${TEN_GOD_GROUP[dj.branchGod] === "비겁" ? "배우자·동거인 자리에 비겁이 앉아 가까운 사람의 지출이 곧 내 지출이 되는 구조입니다" : TEN_GOD_GROUP[dj.branchGod] === "재성" ? "재성이 앉아 돈이 몸에 붙는 자리이나, 세운이 충하면 한 번에 크게 빠집니다" : TEN_GOD_GROUP[dj.branchGod] === "인성" ? "인성이 앉아 문서·보증·명의 대여로 인한 손재가 재물의 급소입니다" : TEN_GOD_GROUP[dj.branchGod] === "관성" ? "관성이 앉아 세금·벌금·과태료·소송 등 공적 지출이 재물의 급소입니다" : "식상이 앉아 체면·접대·취미 지출이 재물의 급소입니다"}.`,
+      heading: "원국 진단 — 삼재(三災)와 관살(官殺), 액이 들어오는 길목",
+      segments: P`${animal}띠 기준 ${!s26 && !s27 ? "2026 병오년·2027 정미년은 모두 삼재 해가 아니라 액이 '해'가 아닌 '달' 단위로 들어옵니다" : `2026 병오년은 ${s26 ? `${s26}(三災)에 해당해 ${s26 === "들삼재" ? "액이 들어오는 첫해라 새 일보다 지키는 쪽이 유리하고" : s26 === "눌삼재" ? "액이 머무는 해라 건강과 소송을 특히 조심해야 하며" : "액이 나가는 해라 마무리와 정리에 좋고"}` : "삼재가 아니며"}, 2027 정미년은 ${s27 ? `${s27}입니다` : "삼재가 아닙니다"}`}. 관살(官殺)은 원국에 ${c.관성}개로 ${c.관성 >= 3 ? "압박이 과해 사고·질병·관재가 몸으로 옵니다" : c.관성 === 0 ? "없어 외부 압박은 적으나 세운 관살이 들어올 때 보완이 필요합니다" : "적절해 큰 액은 세운의 겁살·재살 달에만 집중됩니다"}. ${who}에게 액을 실어 오는 기신(忌神)은 ${gisin}(${ELEMENT_HANJA[gisin]}) 기운으로, 이 오행이 강해지는 달과 사람에게서 사고·구설·손재가 겹치기 쉽습니다.`,
     });
     concernParas.push({
-      heading: "2026 丙午 — 손재수가 터지는 달, 돈줄이 트이는 달",
-      segments: P`2026년 세운 午는 ${who}의 일지와 ${rel26 === "충" ? "충(沖)을 이루어 재물 창고의 문이 열렸다 닫히기를 반복하는 해" : rel26 === "육합" || rel26 === "삼합" ? "합(合)을 이루어 묶여 있던 돈이 풀리는 대신 유혹도 함께 늘어나는 해" : "직접 부딪치지 않아 급격한 손재보다 '조금씩 새는' 누수가 문제인 해"}이며, 천간 丙은 ${sg26}으로 ${TEN_GOD_GROUP[sg26] === "비겁" ? "탈재(奪財)의 기운이 세운으로 직접 들어와 올해 보증·동업은 운기에 맞지 않습니다" : TEN_GOD_GROUP[sg26] === "재성" ? "재성이 세운으로 들어와 들어오는 돈도, 나가는 돈도 함께 커지는 해입니다" : "재물의 통로를 간접적으로 흔듭니다"}. 손재수(損財數)가 가장 극심한 달은 ${Lm(lossM)}로, 이 달에는 보증·대출 연장·신규 카드 발급·고액 결제를 미루는 것이 좋습니다. 반대로 막힌 돈줄이 트이는 달은 ${Lm(openM)}이며, 채무 통합·금리 협상·연봉 협상은 이 달에 집중하면 기운이 화합합니다.`,
+      heading: "2026 丙午 — 겁살·재살의 달, 손재수가 터지는 달",
+      segments: P`2026년 세운 午는 ${who}의 일지 ${dj.branchHanja} 글자와 ${rel26 === "충" ? "충(沖)을 이루어 몸과 자리가 함께 흔들리는 해입니다. 이동·수술·계약에서 돌발 변수가 잦습니다" : rel26 === "육합" || rel26 === "삼합" ? "합(合)을 이루어 큰 액은 비켜 가지만, 사람에 얽힌 구설과 보증이 액의 통로가 되는 해입니다" : rel26 === "복음" ? "같은 글자로 겹치는 복음(伏吟)이라 묵은 문제가 되풀이되기 쉬운 해입니다" : "직접 부딪치지 않아 큰 사고수보다 조금씩 쌓이는 누수가 문제인 해입니다"}. 겁살(劫煞)이 서는 달은 ${Lm(gm)}, 재살(災煞)의 달은 ${Lm(jm)}로 이 두 달에는 원행·수술·고액 계약을 피하는 것이 좋습니다. 손재수(損財數)가 가장 극심한 달은 ${Lm(lossM)}이니 보증·대출 연장·신규 카드 발급·고액 결제를 미루십시오. 반대로 액이 걷히고 운기가 맑아지는 달은 ${Lm(clearM)}이라, 미뤄 둔 결정은 이 달로 옮기면 기운이 화합합니다.`,
     });
     concernParas.push({
-      heading: "밑 빠진 독을 메우는 비책 처방",
-      segments: P`${who}의 독을 메우는 보완 오행은 ${yong}(${ELEMENT_HANJA[yong]})입니다. 지갑·통장 표지는 ${color}으로 바꾸고, 현관 안쪽 ${dir}에 ${L("item", item.money)}을 두어 겁재의 탈재를 막으십시오. 채무 재조정·대출 상담은 ${surname1} 담당자와 인연이 닿을 때 조건이 열리기 쉬우며, 돈을 빌려 달라는 사람 가운데 ${L("surname", `${ELEMENT_CONSONANT[gisin]} 초성 (${ELEMENT_SURNAMES[gisin]})`)} 성씨는 기신(忌神)의 소리오행이라 2026년 한 해 거리를 두는 것이 좋습니다.`,
+      heading: "액운을 소멸하는 비책 처방",
+      segments: P`액운을 소멸하는 비책 물상은 ${L("item", item.shield)}이며, 부적 대신 지닐 색은 ${color}입니다. 현관 안쪽이나 침실의 ${dir}에 두면 ${yong}(${ELEMENT_HANJA[yong]}) 용신의 기운이 살(煞)을 눌러 줍니다. 사람으로 오는 액도 가려야 합니다. ${L("surname", `${ELEMENT_CONSONANT[gisin]} 초성 (${ELEMENT_SURNAMES[gisin]})`)} 성씨는 기신(忌神)의 소리오행이라 2026년 한 해 보증·동업·금전 거래에서 거리를 두는 것이 좋고, 막힌 일을 풀어 줄 귀인은 ${surname1} 성씨입니다.`,
     });
   }
 
-  /* ── 독립 사업·스타트업·투자 ── */
-  if (concern.key === "business") {
+  /* ── 재물 · 사업운 (독립 사업·신규 투자 + 편재운) ── */
+  if (concern.key === "wealth") {
     const sc = scoreYear(r, 2026, "business"), loss = scoreYear(r, 2026, "loss"), sc27 = scoreYear(r, 2027, "business");
     const fraud = worst(loss).month, launch = best(sc, [fraud]).month, expand = best(sc27).month;
     const pj = godCount("편재"), sik = c.식상;
-    concernTitle = "독립 사업 · 스타트업 · 신규 투자 정밀 간명";
+    concernTitle = "재물 · 사업운 정밀 간명";
     concernSummary = `${GYEOK_VESSEL[TEN_GOD_GROUP[gyeokGod]].split(",")[0]}입니다 — 상반기 사기수의 달을 피하면 하반기 문서운이 열리는 흐름입니다.`;
     concernParas.push({
       heading: "타고난 그릇 — 격국(格局)으로 본 사업가 명식",
@@ -417,81 +415,55 @@ export function buildPinpoint(r: SajuResult): PinpointReport {
     });
   }
 
-  /* ── 전성기 대운 ── */
-  if (concern.key === "prime") {
-    const scoreDaeun = (d: DaeunItem) =>
-      (d.stemElement === yong ? 2 : d.stemElement === hui ? 1 : d.stemElement === gisin ? -1 : 0) +
-      (d.branchElement === yong ? 2.2 : d.branchElement === hui ? 1.1 : d.branchElement === gisin ? -1.1 : 0) +
-      (["정관", "정재", "정인", "식신"].includes(d.stemGod) ? 0.6 : 0) + (["정관", "정재", "정인", "식신"].includes(d.branchGod) ? 0.6 : 0);
-    const ranked = [...r.daeun.items].sort((a, b) => scoreDaeun(b) - scoreDaeun(a) || a.startAge - b.startAge);
-    const age = new Date().getFullYear() - r.solar.year + 1;
-    const prime = ranked[0];
-    const future = ranked.find((d) => d.endAge >= age && d.startAge !== prime.startAge) ?? ranked[1];
-    const primePast = prime.endAge < age;
-    const primeLock = L("age", `${prime.startAge}~${prime.endAge}세 ${prime.ganzhi} 대운`);
-    const futureLock = L("age", `${future.startAge}~${future.endAge}세 ${future.ganzhi} 대운`);
-    const relD = cur ? relationOf(cur.branch, y26.branch) : "무관";
-    concernTitle = "인생의 전성기 — 대운(大運) 정밀 간명";
-    concernSummary = cur ? `현재 ${cur.ganzhi} 대운 — ${primePast ? "첫 봉우리는 지났지만 두 번째 봉우리가 남아 있는 흐름입니다." : "진짜 전성기는 아직 오지 않았습니다."}` : "대운의 물길 위에서 세운이 겹치는 달이 인생을 바꿉니다.";
-    concernParas.push({
-      heading: "대운 진단 — 전성기는 언제 오는가",
-      segments: P`${who}의 대운은 ${r.daeun.startAge}세 ${r.daeun.forward ? "순행" : "역행"}으로 흐르며, ${cur ? `현재 ${cur.startAge}~${cur.endAge}세 ${cur.ganzhi} 대운(${cur.stemGod}·${cur.branchGod}) 위에 서 있습니다` : "현재 대운 구간을 산출 중입니다"}. 용신(用神)은 ${yong}(${ELEMENT_HANJA[yong]}), 희신(喜神)은 ${hui}(${ELEMENT_HANJA[hui]})이며, 기신(忌神)은 ${gisin}(${ELEMENT_HANJA[gisin]})입니다. 9개 대운 가운데 용신·희신이 천간과 지지로 함께 들어오는 진짜 전성기는 ${primeLock} 대운입니다. ${primePast
-        ? P`그 봉우리가 이미 지났다고 느끼신다면 절반만 맞습니다. 두 번째 봉우리는 ${futureLock} 대운에 다시 오며, 첫 번째보다 재물의 결실이 크게 맺히는 흐름입니다.`
-        : P`그 이전까지의 시간은 낭비가 아니라 그릇을 넓히는 구간이며, 바로 앞 대운인 ${futureLock} 대운에서 판을 깔아 두면 전성기에 거둘 것이 많아집니다.`}`,
-    });
-    concernParas.push({
-      heading: "2026 丙午 · 2027 丁未 — 인생 역전 황금의 달",
-      segments: P`${cur ? `현재 대운 지지 ${BRANCHES[cur.branch]}(${BRANCHES_KO[cur.branch]}) 글자와 2026 세운 午는 ${relD === "충" ? "충(沖)을 이루어 큰 판이 흔들리는 해입니다. 위기이자 반전의 기회입니다" : relD === "육합" || relD === "삼합" ? "합(合)을 이루어 대운의 힘이 세운을 타고 현실로 내려오는 해입니다" : "충돌 없이 겹쳐 꾸준히 올라가는 해입니다"}. ` : ""}천간 丙 ${sg26}, 2027 丁 ${sg27}의 흐름 속에서 ${who}의 전성기로 올라서는 발판, 곧 운기 최정점의 황금의 달은 ${gold26}과 ${gold27}입니다. 반대로 대운·세운·월운이 서로 충(沖)하는 ${bad26}에는 이직·투자·결혼 같은 큰 결정은 피하는 것이 좋습니다. 기운이 화합하는 달을 골라 움직이는 것이 발복 확률을 극대화합니다.`,
-    });
-    concernParas.push({
-      heading: "전성기를 앞당기는 귀인과 평생 물상",
-      segments: P`전성기를 앞당기는 귀인은 ${surname1}·${surname2} 두 성씨이며, 천을귀인 띠인 ${benefactor.zodiacs.join("·")}띠와 함께할 때 일이 성사됩니다. 평생 지닐 비책 물상은 ${L("item", item.base)}이고, 거주·사무 공간의 ${dir}을 비워 두면 용신의 기운이 드나들기 좋습니다. 대운이 바뀌는 해의 생일 전후 100일 동안은 ${color} 계열을 가까이하십시오.`,
-    });
-  }
-
-  /* ── 절대 기운 (wish) ── */
-  const wishParas: Paragraph[] = [];
-  if (wish.key === "wealth") {
+  /* ── 테마별 핵심 기운 (강조 박스) ── */
+  const focusParas: Paragraph[] = [];
+  let focusLabel = "";
+  if (concern.key === "wealth") {
+    focusLabel = "일확천금 편재운";
     const el = ELEMENTS.find((e) => overcomeBy(e) === me.element) as Element;
     const n = godCount("편재");
     const m = best(scoreYear(r, 2026, "wealth")).month;
-    wishParas.push({
+    focusParas.push({
       heading: "💰 일확천금 편재운(偏財運)",
       segments: P`편재(偏財)는 일간 ${me.title} 기준으로 극(剋)하는 ${el}(${ELEMENT_HANJA[el]}) 가운데 음양이 같은 별입니다. ${who}의 원국에 편재는 ${n === 0 ? "드러나지 않습니다. 큰 재물의 기회는 원국이 아니라 세운이 가져다주는 구조이니, 편재가 세운으로 들어오는 달에 움직이는 것이 발복 확률을 높입니다" : n >= 2 ? `${n}개로 큰돈의 냄새를 맡는 감각은 타고났습니다. 들어온 재물을 묶어 두는 물상이 보완책입니다` : "1개가 자리해 기회는 반드시 옵니다. 기운이 화합하는 '달'을 아는 것이 핵심입니다"}. 2026년 편재의 기운이 최정점에 이르는 달은 ${Lm(m)}이며, 들어온 편재를 붙잡아 두는 금고 물상은 ${L("item", item.money)}입니다.`,
     });
   }
-  if (wish.key === "power") {
+  if (concern.key === "career") {
+    focusLabel = "권력·승진 정관운";
     const el = overcomeBy(me.element);
     const n = godCount("정관");
     const m = best(scoreYear(r, 2026, "power")).month;
-    wishParas.push({
+    focusParas.push({
       heading: "👑 권력·승진 정관운(正官運)",
-      segments: P`정관(正官)은 일간을 다스리는 ${el}(${ELEMENT_HANJA[el]}) 가운데 음양이 다른 별로, 직위·명예·공적 신용을 뜻합니다. ${who}의 원국에 정관은 ${n === 0 ? "드러나지 않아 승진은 조직의 사다리보다 외부 평판·자격·스카우트로 옵니다" : `${n}개 자리해 공적 자리가 당신을 찾는 구조입니다`}${godCount("편관") > 0 && n > 0 ? ". 다만 편관까지 섞인 관살혼잡(官殺混雜)이라 윗선이 둘로 갈려 인연의 선택이 승진 운기를 좌우합니다" : ""}. 2026~2027년 승진·발탁 사령이 내려오는 달은 ${Lm(m)}이며, 장성살(將星殺)이 서는 그 달에 지녀야 할 인장(印章) 물상은 ${L("item", item.seal)}입니다.`,
+      segments: P`정관(正官)은 일간을 다스리는 ${el}(${ELEMENT_HANJA[el]}) 가운데 음양이 다른 별로, 직위·명예·공적 신용을 뜻합니다. ${who}의 원국에 정관은 ${n === 0 ? "드러나지 않아 승진은 조직의 사다리보다 외부 평판·자격·스카우트로 옵니다" : `${n}개 자리해 공적 자리가 당신을 찾는 구조입니다`}${godCount("편관") > 0 && n > 0 ? ". 다만 편관까지 섞인 관살혼잡(官殺混雜)이라 윗선이 둘로 갈려 인연의 선택이 승진 운기를 좌우합니다" : ""}. 2026년 승진·발탁·시험 합격의 사령이 내려오는 달은 ${Lm(m)}이며, 장성살(將星殺)이 서는 그 달에 지녀야 할 인장(印章) 물상은 ${L("item", item.seal)}입니다.`,
     });
   }
-  if (wish.key === "charm") {
+  if (concern.key === "love") {
+    focusLabel = "도화·인기·매력운";
     const dh = dohwaBranchOf(yj.branch);
     const present = r.pillars.some((p) => p.branch === dh);
     const m = monthOfBranch(dh);
     const loveColor = ELEMENT_COLOR_KO[BRANCH_ELEMENT[dh]];
-    wishParas.push({
+    focusParas.push({
       heading: "🌸 도화·인기·매력운(桃花運)",
       segments: P`${yj.branchHanja}(${BRANCH_ANIMAL[yj.branch]}띠)생인 ${who}의 도화(桃花)는 ${BRANCHES[dh]}(${BRANCHES_KO[dh]}) 기운이며 ${TRINE_LABEL[trineGroupOf(yj.branch)]}의 년살(年殺)에 해당합니다. ${present ? "원국에 도화가 이미 앉아 있어 타고난 매력 자본이 있습니다. 다만 도화가 세운의 충을 맞는 해에는 매력이 구설로 흐르기 쉬우니 노출의 강약을 조절하는 것이 좋습니다" : "원국에 도화가 없어 매력은 세운·월운의 도화월에 집중적으로 피어납니다. 평소보다 그 달에 주변의 시선이 달라지는 흐름입니다"}. 2026년 도화가 서는 달은 ${Lm(m)}이며, 그 달 이성과 대중의 시선을 끌어오는 색은 ${L("color", loveColor)}, 몸에 지닐 물상은 ${L("item", item.love)}입니다.`,
     });
   }
-  if (wish.key === "shield") {
-    const s26 = samjaeStage(yj.branch, y26.branch), s27 = samjaeStage(yj.branch, y27.branch);
-    const gm = monthOfBranch(geopsalBranchOf(yj.branch)), jm = monthOfBranch(jaesalBranchOf(yj.branch));
-    wishParas.push({
-      heading: "🛡️ 액운·삼재 소멸운",
-      segments: P`${BRANCH_ANIMAL[yj.branch]}띠 기준 ${!s26 && !s27 ? "2026 병오년·2027 정미년은 모두 삼재 해가 아니라 액이 '해'가 아닌 '달' 단위로 들어옵니다" : `2026 병오년은 ${s26 ? `${s26}(三災)에 해당해 ${s26 === "들삼재" ? "액이 들어오는 첫해라 새 일보다 지키는 쪽이 유리하고" : s26 === "눌삼재" ? "액이 머무는 해라 건강과 소송을 특히 조심해야 하며" : "액이 나가는 해라 마무리와 정리에 좋고"}` : "삼재가 아니며"}, 2027 정미년은 ${s27 ? `${s27}입니다` : "삼재가 아닙니다"}`}. 관살(官殺)은 원국에 ${c.관성}개로 ${c.관성 >= 3 ? "압박이 과해 사고·질병·관재가 몸으로 옵니다" : c.관성 === 0 ? "없어 외부 압박은 적으나 세운 관살이 들어올 때 보완이 필요합니다" : "적절해 큰 액은 세운의 겁살·재살 달에만 집중됩니다"}. 2026년 겁살(劫煞)이 서는 달은 ${Lm(gm)}, 재살(災煞)의 달은 ${Lm(jm)}로 이 두 달에는 원행·수술·고액 계약을 피하는 것이 좋습니다. 액운을 소멸하는 비책 물상은 ${L("item", item.shield)}이며, 부적 대신 지닐 색은 ${color}입니다.`,
+  if (concern.key === "shield") {
+    focusLabel = "손재수 차단";
+    const bi = c.비겁, jae = c.재성;
+    const lossM = worst(scoreYear(r, 2026, "loss")).month;
+    const openM = best(scoreYear(r, 2026, "debt"), [lossM]).month;
+    focusParas.push({
+      heading: "💸 손재수(損財數) 차단 — 새는 재물 막기",
+      segments: P`${who}의 원국에는 비겁(比劫) ${bi}개, 재성(財星) ${jae}개가 자리합니다. ${bi >= 2 ? "비겁이 재성을 두고 다투는 군겁쟁재(群劫爭財) 구조라, 당신의 돈은 투자 실패보다 동업·보증·가족·연인처럼 '사람'을 통해 새 나갑니다" : jae === 0 ? "재성이 드러나지 않아 돈의 출입을 몸으로 느끼기 전에 이미 빠져나간 뒤입니다. 자동이체와 현금흐름표로 흐름을 눈에 보이게 하는 것이 보완책입니다" : r.strength.label === "신약" && jae >= 2 ? "돈은 많이 오가지만 일간이 약해 쥐면 흘리는 재다신약(財多身弱)입니다. 몸이 지칠 때의 결제는 피하는 것이 좋습니다" : "재성과 비겁의 균형 자체는 나쁘지 않습니다. 문제는 타이밍이며, 특정 달에 집중되는 손재수의 시기를 피하는 것이 재물 보전의 핵심입니다"}. 일지 ${dj.branchHanja}의 ${dj.branchGod}은 ${TEN_GOD_GROUP[dj.branchGod] === "비겁" ? "가까운 사람의 지출이 곧 내 지출이 되는 자리입니다" : TEN_GOD_GROUP[dj.branchGod] === "재성" ? "돈이 몸에 붙는 자리이나, 세운이 충하면 한 번에 크게 빠집니다" : TEN_GOD_GROUP[dj.branchGod] === "인성" ? "문서·보증·명의 대여로 인한 손재가 급소인 자리입니다" : TEN_GOD_GROUP[dj.branchGod] === "관성" ? "세금·벌금·과태료·소송 등 공적 지출이 급소인 자리입니다" : "체면·접대·취미 지출이 급소인 자리입니다"}. 2026년 막힌 돈줄이 트이는 달은 ${Lm(openM)}이라 채무 통합·금리 협상·연봉 협상은 이 달에 집중하고, 겁재의 탈재(奪財)를 막아 줄 물상은 ${L("item", item.money)}입니다.`,
     });
   }
 
   const lockCount =
-    [...concernParas, ...wishParas].reduce((n, p) => n + p.segments.filter(isLock).length, 0) + timelines.length * 2;
+    [...concernParas, ...focusParas].reduce((n, p) => n + p.segments.filter(isLock).length, 0) + timelines.length * 2;
 
-  return { concern, wish, gyeokguk, benefactor, remedy, concernTitle, concernSummary, concernParas, wishParas, timelines, lockCount };
+  return { concern, focusLabel, gyeokguk, benefactor, remedy, concernTitle, concernSummary, concernParas, focusParas, timelines, lockCount };
 }
 
 /** 공유 카드용 — 해당 연도 세운의 운기 키워드 (일간 십성 × 연지 기준 신살) */

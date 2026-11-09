@@ -62,7 +62,7 @@ export default function SajuApp() {
     return () => window.removeEventListener(HOME_RESET_EVENT, onHome);
   }, [reset]);
 
-  /** 퀵 카드 선택 → 폼의 고민 칩 즉시 선택 + 폼으로 부드럽게 스크롤 */
+  /** 퀵 카드 선택 → 폼의 테마 카드 즉시 선택 + 폼으로 부드럽게 스크롤 */
   const pickConcern = (c: ConcernKey) => {
     setPresetConcern(c);
     window.requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
